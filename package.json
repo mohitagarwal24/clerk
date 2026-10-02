@@ -3,14 +3,24 @@
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.28.0",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
+    "demo": "concurrently -k -n mock,agent,console -c gray,blue,green \"pnpm dev:mock\" \"pnpm dev:agent\" \"pnpm dev:console\"",
     "dev:mock": "pnpm --filter @clerk/mock-company dev",
+    "dev:agent": "pnpm --filter @clerk/agent start",
+    "dev:console": "pnpm --filter @clerk/console dev",
+    "cli": "tsx --env-file-if-exists=.env apps/agent/src/cli.ts",
+    "evals": "tsx --env-file-if-exists=.env evals/run-all.ts",
+    "mcp": "tsx --env-file-if-exists=.env apps/agent/src/mcp.ts",
     "reset": "pnpm --filter @clerk/mock-company reset",
+    "phoenix": "uvx arize-phoenix serve",
     "test": "pnpm -r --if-present test",
     "typecheck": "pnpm -r --if-present typecheck",
     "spike:aria": "tsx spikes/aria.ts",
-    "spike:gemini": "tsx --env-file=.env spikes/gemini.ts"
+    "spike:gemini": "tsx --env-file=.env spikes/gemini.ts",
+    "offline": "concurrently -k -n agent,console -c blue,green \"tsx apps/agent/test/offline-console.ts\" \"AGENT_PORT=4610 pnpm --filter @clerk/console exec vite --port 5174\""
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
@@ -18,6 +28,7 @@
     "typescript": "^5.7.0",
     "vitest": "^3.0.0",
     "playwright": "^1.63.0",
-    "@google/genai": "^2.26.0"
+    "@google/genai": "^2.26.0",
+    "concurrently": "^10.0.5"
   }
 }

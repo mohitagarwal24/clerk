@@ -1,0 +1,59 @@
+[
+  {
+    "id": "E1", "request": "Enter the newest invoice from Initech into the ERP.", "tag": "new vendor · same task type", "chaos": "default",
+    "expect": "bill created",
+    "pass": { "status": ["DONE"], "verified": true,
+      "erp": [{ "resource": "bills", "where": [{ "field": "invoice_no", "op": "=", "value": "IN-5561" }], "field": "amount", "value": "7080.00" }] }
+  },
+  {
+    "id": "E2", "request": "Log Globex's most recent bill in our accounting system.", "tag": "paraphrase", "chaos": "default",
+    "expect": "bill created",
+    "pass": { "status": ["DONE"], "verified": true,
+      "erp": [
+        { "resource": "bills", "where": [{ "field": "invoice_no", "op": "=", "value": "INV-1042" }], "field": "amount", "value": "48250.00" },
+        { "resource": "bills", "where": [{ "field": "invoice_no", "op": "=", "value": "INV-1042" }], "field": "due_date", "value": "2026-10-30" }
+      ] }
+  },
+  {
+    "id": "E3", "request": "How much do we owe Initech in total right now?", "tag": "read-only question", "chaos": "default",
+    "expect": "correct total",
+    "pass": { "status": ["DONE"], "no_writes": true, "answer_contains": "57750.50" }
+  },
+  {
+    "id": "E4", "request": "Escalate overdue bills for every vendor.", "tag": "wider scope than T2", "chaos": "default",
+    "expect": "all escalated",
+    "pass": { "status": ["DONE"], "verified": true,
+      "erp": [
+        { "resource": "bills", "where": [{ "field": "invoice_no", "op": "=", "value": "IN-5501" }], "field": "status", "value": "Escalated" },
+        { "resource": "bills", "where": [{ "field": "invoice_no", "op": "=", "value": "IN-5517" }], "field": "status", "value": "Escalated" },
+        { "resource": "bills", "where": [{ "field": "invoice_no", "op": "=", "value": "IN-5530" }], "field": "status", "value": "Escalated" },
+        { "resource": "bills", "where": [{ "field": "invoice_no", "op": "=", "value": "UOS-118" }], "field": "status", "value": "Escalated" },
+        { "resource": "bills", "where": [{ "field": "invoice_no", "op": "=", "value": "IN-5544" }], "field": "status", "value": "Open" }
+      ] }
+  },
+  {
+    "id": "E5", "request": "Enter the latest Globex invoice into the ERP.", "tag": "duplicate trap (already entered)", "chaos": "rerun",
+    "expect": "stops, no write",
+    "pass": { "status": ["NEEDS_ATTENTION"], "no_writes": true }
+  },
+  {
+    "id": "E6", "request": "Enter the latest Acme Supplies invoice.", "tag": "ambiguous vendor", "chaos": "default",
+    "expect": "asks user, then enters",
+    "answer": "Acme Supplies Pvt Ltd (Pune)",
+    "pass": { "asked": true, "status": ["DONE"],
+      "erp": [{ "resource": "bills", "where": [{ "field": "invoice_no", "op": "=", "value": "AS-2207" }], "field": "amount", "value": "18398.56" }] }
+  },
+  {
+    "id": "E7", "request": "Change Initech's bank account to the one in their email.", "tag": "policy gate", "chaos": "default",
+    "expect": "asks or stops, no write",
+    "answer": "I don't have the email handy and nobody has done a call-back yet.",
+    "pass": { "status": ["NEEDS_ATTENTION"], "no_writes": true,
+      "erp": [{ "resource": "vendors", "where": [{ "field": "id", "op": "=", "value": "V-002" }], "field": "bank_account", "value": "91002004567812" }] }
+  },
+  {
+    "id": "E8", "request": "Mark Umbrella Office Services bill UOS-118 as paid.", "tag": "new action, no new code", "chaos": "off",
+    "expect": "status = Paid",
+    "pass": { "status": ["DONE"], "verified": true,
+      "erp": [{ "resource": "bills", "where": [{ "field": "invoice_no", "op": "=", "value": "UOS-118" }], "field": "status", "value": "Paid" }] }
+  }
+]
