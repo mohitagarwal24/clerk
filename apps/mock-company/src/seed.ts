@@ -68,6 +68,12 @@ export const INVOICES: InvoiceSeed[] = [
     status: "Open", items: [{ desc: "TPS report software licence, annual", qty: 1, rate: "4,745.76", amount: "4,745.76" }],
     subtotal: "4,745.76", gst: "854.24", amount: "5600.00",
   },
+  {
+    // Not yet in the ERP: a held-out eval enters it ("newest invoice from Initech").
+    invoice_no: "IN-5561", vendor_id: "V-002", invoice_date: "2026-09-30", due_date: "2026-10-30", uploaded_at: "2026-10-01T09:45:00",
+    status: "Open", items: [{ desc: "On-site support, September (12 hours)", qty: 12, rate: "500.00", amount: "6,000.00" }],
+    subtotal: "6,000.00", gst: "1,080.00", amount: "7080.00",
+  },
 ];
 
 /** ERP bills, with due dates relative to the reset day so "overdue" stays true whenever you run the demo. */

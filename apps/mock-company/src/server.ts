@@ -32,9 +32,14 @@ export function createApp(deps: Deps) {
   app.get("/", (c) => c.html(`<!doctype html><title>Acme Corp</title><h1>Acme Corp mock systems</h1>
     <ul><li><a href="/portal">Supplier Invoice Portal</a></li><li><a href="/erp">ERP (Accounts Payable)</a></li></ul>`));
   app.get("/__health", (c) => c.json({ ok: true }));
-  app.post("/__reset", (c) => {
+  // Clears chaos state; with ?reseed=1 also reseeds the database (evals call this between cases).
+  app.post("/__reset", async (c) => {
     deps.chaos.reset();
-    return c.json({ ok: true });
+    if (c.req.query("reseed") === "1") {
+      const { seedDb } = await import("./seed.js");
+      seedDb(deps.db, deps.today());
+    }
+    return c.json({ ok: true, reseeded: c.req.query("reseed") === "1" });
   });
 
   app.route("/portal", portalRoutes(deps));
