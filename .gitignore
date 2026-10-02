@@ -1,0 +1,12 @@
+node_modules/
+.env
+runs/
+*.sqlite
+*.sqlite-*
+dist/
+.DS_Store
+apps/mock-company/invoices/*.pdf
+apps/mock-company/data/
+
+*:Zone.Identifier
+evals/runs/

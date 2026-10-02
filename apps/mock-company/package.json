@@ -1,0 +1,22 @@
+{
+  "name": "@clerk/mock-company",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "reset": "tsx src/reset.ts",
+    "test": "vitest run",
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.3",
+    "better-sqlite3": "^13.0.3",
+    "hono": "^4.13.12",
+    "pdf-lib": "^1.17.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "unpdf": "^1.8.1"
+  }
+}

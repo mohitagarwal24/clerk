@@ -1,0 +1,23 @@
+{
+  "name": "clerk",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev:mock": "pnpm --filter @clerk/mock-company dev",
+    "reset": "pnpm --filter @clerk/mock-company reset",
+    "test": "pnpm -r --if-present test",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "spike:aria": "tsx spikes/aria.ts",
+    "spike:gemini": "tsx --env-file=.env spikes/gemini.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0",
+    "playwright": "^1.63.0",
+    "@google/genai": "^2.26.0"
+  }
+}

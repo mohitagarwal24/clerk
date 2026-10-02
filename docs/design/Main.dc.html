@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Clerk — New task</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#E9ECE6}
+a{color:#2238C9}a:hover{color:#16267F}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+@media (max-width: 900px){
+.shell{grid-template-columns:1fr !important}
+.rail{flex-direction:row !important;height:auto !important;position:static !important;padding:12px 16px !important}
+.railnav{flex-direction:row !important}
+.cols{grid-template-columns:1fr !important}
+.examples{grid-template-columns:1fr !important}
+.runrow{grid-template-columns:1fr auto !important}
+.hide-sm{display:none !important}
+.main{padding:24px 16px !important}
+}
+</style>
+</helmet>
+<div class="shell" style="min-height: 100vh; display: grid; grid-template-columns: 76px minmax(0, 1fr); font-family: 'Schibsted Grotesk', system-ui, sans-serif; color: #151917; background: #E9ECE6">
+
+<nav class="rail" aria-label="Primary" style="position: sticky; top: 0; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 22px 0; background: #151917">
+<div class="railnav" style="display: flex; flex-direction: column; align-items: center; gap: 10px">
+<a href="Main.dc.html" aria-label="Clerk home" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: #E9ECE6; color: #151917; font-weight: 800; font-size: 20px; text-decoration: none; border-radius: 10px; margin-bottom: 18px">C</a>
+<a href="Main.dc.html" aria-label="New task" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: #2B2F2C; color: #E9ECE6"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></a>
+<a href="Run.dc.html" aria-label="Runs" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 10px; color: #9AA39D"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h7"></path></svg></a>
+<a href="Report.dc.html" aria-label="Evidence" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 10px; color: #9AA39D"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"></path><path d="M12 3l7 3v6c0 4-3 7.5-7 9-4-1.5-7-5-7-9V6z"></path></svg></a>
+<a href="Evals.dc.html" aria-label="Evals" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 10px; color: #9AA39D"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path></svg></a>
+<a href="#playbook" aria-label="Company playbook" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 10px; color: #9AA39D"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h11a3 3 0 013 3v13H8a3 3 0 01-3-3z"></path><path d="M5 17a3 3 0 013-3h11"></path></svg></a>
+</div>
+<div class="hide-sm mono" style="writing-mode: vertical-rl; transform: rotate(180deg); font-size: 11px; letter-spacing: 0.14em; color: #8A938D">ACME CORP · SANDBOX</div>
+</nav>
+
+<main class="main" style="box-sizing: border-box; padding: 40px 56px 64px; display: flex; flex-direction: column; gap: 40px; max-width: 1280px; width: 100%">
+
+<header style="display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; flex-wrap: wrap">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<div class="mono" style="font-size: 12px; letter-spacing: 0.12em; color: #4D5650">CLERK · AUTONOMOUS TASK WORKER</div>
+<h1 style="margin: 0; font-size: 52px; line-height: 1.02; font-weight: 800; letter-spacing: -0.03em">What should get done?</h1>
+</div>
+<div class="mono" style="display: flex; gap: 8px; align-items: center; font-size: 12px; color: #2F3632; padding: 8px 12px; border: 1px solid #C3C9C0; border-radius: 999px; background: #F4F5F1">
+<span style="width: 8px; height: 8px; border-radius: 99px; background: #1F7A4D"></span>
+Portal · ERP reachable
+</div>
+</header>
+
+<section aria-label="New task" style="display: flex; flex-direction: column; background: #F7F8F5; border: 1.5px solid #151917; border-radius: 16px; box-shadow: 6px 6px 0 #151917">
+<label for="task" class="mono" style="padding: 18px 22px 0; font-size: 12px; letter-spacing: 0.1em; color: #4D5650">REQUEST</label>
+<textarea id="task" rows="3" style="border: 0; outline: none; resize: none; background: transparent; padding: 10px 22px 18px; font-family: 'Schibsted Grotesk', sans-serif; font-size: 24px; line-height: 1.35; color: #151917">Find the latest invoice from Globex, extract the amount and due date, enter it into the ERP, and tell me when it's done.</textarea>
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 14px 18px; border-top: 1px solid #D3D8D0">
+<div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center">
+<button type="button" aria-pressed="true" class="mono" style="min-height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-radius: 10px; border: 1px solid #B4690E; background: #FBEBD3; color: #6E3F05; font-size: 13px; font-weight: 600; cursor: pointer">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7z"></path></svg>
+Chaos on · 5 traps
+</button>
+<button type="button" aria-pressed="true" class="mono" style="min-height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-radius: 10px; border: 1px solid #C3C9C0; background: transparent; color: #2F3632; font-size: 13px; cursor: pointer">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 018 0v4"></path></svg>
+Approve irreversible steps
+</button>
+<label class="mono" for="model" style="min-height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 6px 0 14px; border-radius: 10px; border: 1px solid #C3C9C0; font-size: 13px; color: #2F3632">
+Model
+<select id="model" style="border: 0; background: transparent; font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: #151917; padding: 8px 4px"><option>[GEMINI_MODEL]</option></select>
+</label>
+</div>
+<a href="Run.dc.html" style="min-height: 48px; display: flex; align-items: center; gap: 10px; padding: 0 22px; border-radius: 12px; background: #2238C9; color: #FFFFFF; font-size: 16px; font-weight: 700; text-decoration: none">
+Run task
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+</a>
+</div>
+</section>
+
+<section aria-labelledby="ex" style="display: flex; flex-direction: column; gap: 14px">
+<h2 id="ex" class="mono" style="margin: 0; font-size: 12px; letter-spacing: 0.12em; font-weight: 500; color: #4D5650">TRY A TASK — SAME AGENT, DIFFERENT GOALS</h2>
+<div class="examples" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+<button type="button" style="text-align: left; display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 14px; border: 1px solid #C3C9C0; background: #F4F5F1; cursor: pointer; font-family: inherit; color: inherit">
+<span class="mono" style="font-size: 11px; letter-spacing: 0.1em; color: #2238C9; font-weight: 600">T1 · DATA ENTRY</span>
+<span style="font-size: 17px; line-height: 1.35; font-weight: 600">Enter the latest Globex invoice into the ERP.</span>
+<span style="font-size: 13px; color: #4D5650; line-height: 1.45">Portal → PDF → ERP form → read-back check</span>
+</button>
+<button type="button" style="text-align: left; display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 14px; border: 1px solid #C3C9C0; background: #F4F5F1; cursor: pointer; font-family: inherit; color: inherit">
+<span class="mono" style="font-size: 11px; letter-spacing: 0.1em; color: #2238C9; font-weight: 600">T2 · BULK UPDATE</span>
+<span style="font-size: 17px; line-height: 1.35; font-weight: 600">Escalate every overdue Initech bill and total what's outstanding.</span>
+<span style="font-size: 13px; color: #4D5650; line-height: 1.45">Iterates a list, computes a result</span>
+</button>
+<button type="button" style="text-align: left; display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 14px; border: 1px solid #C3C9C0; background: #F4F5F1; cursor: pointer; font-family: inherit; color: inherit">
+<span class="mono" style="font-size: 11px; letter-spacing: 0.1em; color: #8A4B06; font-weight: 600">T3 · POLICY GATE</span>
+<span style="font-size: 17px; line-height: 1.35; font-weight: 600">Globex changed bank details, update the vendor record.</span>
+<span style="font-size: 13px; color: #4D5650; line-height: 1.45">Playbook says verify first, so it asks</span>
+</button>
+<button type="button" style="text-align: left; display: flex; flex-direction: column; gap: 12px; padding: 18px; border-radius: 14px; border: 1px solid #C3C9C0; background: #F4F5F1; cursor: pointer; font-family: inherit; color: inherit">
+<span class="mono" style="font-size: 11px; letter-spacing: 0.1em; color: #8A4B06; font-weight: 600">T4 · AMBIGUITY</span>
+<span style="font-size: 17px; line-height: 1.35; font-weight: 600">Enter the latest Acme Supplies invoice.</span>
+<span style="font-size: 13px; color: #4D5650; line-height: 1.45">Two vendors match, so it asks which</span>
+</button>
+</div>
+</section>
+
+<div class="cols" style="display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr); gap: 24px; align-items: start">
+
+<section aria-labelledby="recent" style="display: flex; flex-direction: column; background: #F7F8F5; border: 1px solid #C3C9C0; border-radius: 14px; overflow: hidden">
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #D3D8D0">
+<h2 id="recent" style="margin: 0; font-size: 17px; font-weight: 700">Recent runs</h2>
+<a href="Run.dc.html" class="mono" style="font-size: 12px">All runs</a>
+</div>
+<a href="Run.dc.html" class="runrow" style="display: grid; grid-template-columns: 92px minmax(0, 1fr) 150px 70px; gap: 14px; align-items: center; padding: 14px 20px; border-bottom: 1px solid #E1E5DE; text-decoration: none; color: #151917; min-height: 44px">
+<span class="mono hide-sm" style="font-size: 12px; color: #4D5650">run_0042</span>
+<span style="font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Enter latest Globex invoice into ERP</span>
+<span class="mono" style="justify-self: start; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; padding: 5px 9px; border-radius: 6px; background: #FBEBD3; color: #6E3F05">NEEDS APPROVAL</span>
+<span class="mono hide-sm" style="font-size: 12px; color: #4D5650; text-align: right">14/40</span>
+</a>
+<a href="Report.dc.html" class="runrow" style="display: grid; grid-template-columns: 92px minmax(0, 1fr) 150px 70px; gap: 14px; align-items: center; padding: 14px 20px; border-bottom: 1px solid #E1E5DE; text-decoration: none; color: #151917; min-height: 44px">
+<span class="mono hide-sm" style="font-size: 12px; color: #4D5650">run_0041</span>
+<span style="font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Escalate overdue Initech bills</span>
+<span class="mono" style="justify-self: start; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; padding: 5px 9px; border-radius: 6px; background: #D7EDDF; color: #134B2F">VERIFIED 3/3</span>
+<span class="mono hide-sm" style="font-size: 12px; color: #4D5650; text-align: right">22/40</span>
+</a>
+<a href="Report.dc.html" class="runrow" style="display: grid; grid-template-columns: 92px minmax(0, 1fr) 150px 70px; gap: 14px; align-items: center; padding: 14px 20px; border-bottom: 1px solid #E1E5DE; text-decoration: none; color: #151917; min-height: 44px">
+<span class="mono hide-sm" style="font-size: 12px; color: #4D5650">run_0040</span>
+<span style="font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Update Globex bank details</span>
+<span class="mono" style="justify-self: start; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; padding: 5px 9px; border-radius: 6px; background: #E3E6F7; color: #16267F">ASKED USER</span>
+<span class="mono hide-sm" style="font-size: 12px; color: #4D5650; text-align: right">6/40</span>
+</a>
+<a href="Report.dc.html" class="runrow" style="display: grid; grid-template-columns: 92px minmax(0, 1fr) 150px 70px; gap: 14px; align-items: center; padding: 14px 20px; text-decoration: none; color: #151917; min-height: 44px">
+<span class="mono hide-sm" style="font-size: 12px; color: #4D5650">run_0039</span>
+<span style="font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Enter latest Globex invoice into ERP (rerun)</span>
+<span class="mono" style="justify-self: start; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; padding: 5px 9px; border-radius: 6px; background: #F6DAD6; color: #8A1C12">STOPPED · DUPLICATE</span>
+<span class="mono hide-sm" style="font-size: 12px; color: #4D5650; text-align: right">9/40</span>
+</a>
+</section>
+
+<section id="playbook" aria-labelledby="pb" style="display: flex; flex-direction: column; gap: 14px; padding: 20px; border-radius: 14px; background: #151917; color: #E9ECE6">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<h2 id="pb" style="margin: 0; font-size: 17px; font-weight: 700">Company playbook</h2>
+<span class="mono" style="font-size: 11px; color: #9AA39D">company/playbook.md</span>
+</div>
+<p style="margin: 0; font-size: 14px; line-height: 1.5; color: #C4CBC5">What Clerk reads before planning: where things live, how work is done here, and what needs a human.</p>
+<ul class="mono" style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 12.5px; line-height: 1.45">
+<li style="display: flex; flex-direction: column; gap: 2px"><span style="color: #8FA2FF">systems.md</span><span style="color: #C4CBC5">Invoices live in Vendor Portal; bills in ERP</span></li>
+<li style="display: flex; flex-direction: column; gap: 2px"><span style="color: #8FA2FF">invoice-entry.md</span><span style="color: #C4CBC5">Skip superseded invoices; check for duplicates first</span></li>
+<li style="display: flex; flex-direction: column; gap: 2px"><span style="color: #F3B562">approvals.md</span><span style="color: #C4CBC5">Every ERP write is held for approval</span></li>
+<li style="display: flex; flex-direction: column; gap: 2px"><span style="color: #F3B562">vendor-changes.md</span><span style="color: #C4CBC5">Bank detail changes need human verification</span></li>
+</ul>
+<p class="mono" style="margin: 0; font-size: 11.5px; line-height: 1.5; color: #9AA39D">Skills load on demand: the agent sees the index and opens only what the task needs.</p>
+</section>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1060}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

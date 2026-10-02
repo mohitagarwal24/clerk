@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Clerk — Verified report</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#E9ECE6}
+a{color:#2238C9}a:hover{color:#16267F}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+@media (max-width: 1000px){
+.cols{grid-template-columns:1fr !important}
+.shots{grid-template-columns:repeat(2,minmax(0,1fr)) !important}
+}
+@media (max-width: 900px){
+.shell{grid-template-columns:1fr !important}
+.rail{flex-direction:row !important;height:auto !important;position:static !important;padding:12px 16px !important}
+.railnav{flex-direction:row !important}
+.hide-sm{display:none !important}
+.main{padding:20px 16px !important}
+.crit{grid-template-columns:1fr !important}
+}
+</style>
+</helmet>
+<div class="shell" style="min-height: 100vh; display: grid; grid-template-columns: 76px minmax(0, 1fr); font-family: 'Schibsted Grotesk', system-ui, sans-serif; color: #151917; background: #E9ECE6">
+
+<nav class="rail" aria-label="Primary" style="position: sticky; top: 0; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 22px 0; background: #151917">
+<div class="railnav" style="display: flex; flex-direction: column; align-items: center; gap: 10px">
+<a href="Main.dc.html" aria-label="Clerk home" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: #E9ECE6; color: #151917; font-weight: 800; font-size: 20px; text-decoration: none; border-radius: 10px; margin-bottom: 18px">C</a>
+<a href="Main.dc.html" aria-label="New task" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 10px; color: #9AA39D"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></a>
+<a href="Run.dc.html" aria-label="Runs" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 10px; color: #9AA39D"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 6h16M4 12h10M4 18h7"></path></svg></a>
+<a href="Report.dc.html" aria-label="Evidence" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: #2B2F2C; color: #E9ECE6"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"></path><path d="M12 3l7 3v6c0 4-3 7.5-7 9-4-1.5-7-5-7-9V6z"></path></svg></a>
+</div>
+<div class="hide-sm mono" style="writing-mode: vertical-rl; transform: rotate(180deg); font-size: 11px; letter-spacing: 0.14em; color: #8A938D">ACME CORP · SANDBOX</div>
+</nav>
+
+<main class="main" style="box-sizing: border-box; padding: 28px 40px 56px; display: flex; flex-direction: column; gap: 24px; width: 100%; max-width: 1360px">
+
+<div class="mono" style="display: flex; gap: 12px; align-items: center; font-size: 12px; color: #4D5650; flex-wrap: wrap">
+<a href="Run.dc.html">run_0042</a><span aria-hidden="true">/</span><span>17 steps</span><span aria-hidden="true">/</span><span>3 recoveries</span><span aria-hidden="true">/</span><span>2 approvals</span><span aria-hidden="true">/</span><span>03:41</span>
+</div>
+
+<section aria-labelledby="verdict" style="display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 24px; align-items: center; padding: 26px 28px; border-radius: 16px; background: #133D28; color: #EAF5EE">
+<div style="width: 72px; height: 72px; border-radius: 16px; background: #D7EDDF; display: flex; align-items: center; justify-content: center">
+<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#133D28" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"></path></svg>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px; min-width: 0">
+<span class="mono" style="font-size: 12px; letter-spacing: 0.12em; color: #9FD3B4">VERIFIED · 4 OF 4 · SOURCE RE-CHECK + ERP RECORD CHECK</span>
+<h1 id="verdict" style="margin: 0; font-size: 34px; line-height: 1.12; font-weight: 800; letter-spacing: -0.02em">Done. Globex INV-1042 is in the ERP as bill B-2291, ₹48,250.00 due 30/10/2026.</h1>
+</div>
+</section>
+
+<div class="cols" style="display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 22px; align-items: start">
+
+<div style="display: flex; flex-direction: column; gap: 22px">
+<section aria-labelledby="checks" style="display: flex; flex-direction: column; border-radius: 14px; background: #F7F8F5; border: 1px solid #C3C9C0; overflow: hidden">
+<div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #D3D8D0; gap: 12px; flex-wrap: wrap">
+<h2 id="checks" style="margin: 0; font-size: 17px; font-weight: 700">What the verifier checked</h2>
+<span class="mono" style="font-size: 11.5px; color: #4D5650">fresh browser login · never saw the agent's facts or reasoning</span>
+</div>
+<div class="crit mono" style="display: grid; grid-template-columns: 44px minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr) 70px; gap: 12px; padding: 10px 20px; font-size: 10.5px; letter-spacing: 0.1em; color: #4D5650; border-bottom: 1px solid #E1E5DE">
+<span>ID</span><span>CRITERION</span><span class="hide-sm">EXPECTED</span><span class="hide-sm">FOUND IN ERP</span><span>RESULT</span>
+</div>
+<div class="crit" style="display: grid; grid-template-columns: 44px minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr) 70px; gap: 12px; padding: 14px 20px; border-bottom: 1px solid #E1E5DE; align-items: center; font-size: 14px">
+<span class="mono" style="color: #8A938D; font-size: 12px">C1</span><span style="display: flex; flex-direction: column; gap: 3px">One bill for INV-1042<span class="mono" style="font-size: 10.5px; color: #4D5650">ERP record · code</span></span><span class="mono hide-sm" style="font-size: 12.5px">count = 1</span><span class="mono hide-sm" style="font-size: 12.5px">1 (B-2291)</span><span class="mono" style="font-size: 11px; font-weight: 600; color: #134B2F; background: #D7EDDF; padding: 4px 8px; border-radius: 5px; justify-self: start">PASS</span>
+</div>
+<div class="crit" style="display: grid; grid-template-columns: 44px minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr) 70px; gap: 12px; padding: 14px 20px; border-bottom: 1px solid #E1E5DE; align-items: center; font-size: 14px">
+<span class="mono" style="color: #8A938D; font-size: 12px">C2</span><span style="display: flex; flex-direction: column; gap: 3px">Amount matches PDF<span class="mono" style="font-size: 10.5px; color: #4D5650">source re-read · ERP record · code</span></span><span class="mono hide-sm" style="font-size: 12.5px">48250.00</span><span class="mono hide-sm" style="font-size: 12.5px">48250.00</span><span class="mono" style="font-size: 11px; font-weight: 600; color: #134B2F; background: #D7EDDF; padding: 4px 8px; border-radius: 5px; justify-self: start">PASS</span>
+</div>
+<div class="crit" style="display: grid; grid-template-columns: 44px minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr) 70px; gap: 12px; padding: 14px 20px; border-bottom: 1px solid #E1E5DE; align-items: center; font-size: 14px">
+<span class="mono" style="color: #8A938D; font-size: 12px">C3</span><span style="display: flex; flex-direction: column; gap: 3px">Due date matches PDF<span class="mono" style="font-size: 10.5px; color: #4D5650">source re-read · ERP record · code</span></span><span class="mono hide-sm" style="font-size: 12.5px">2026-10-30</span><span class="mono hide-sm" style="font-size: 12.5px">30/10/2026</span><span class="mono" style="font-size: 11px; font-weight: 600; color: #134B2F; background: #D7EDDF; padding: 4px 8px; border-radius: 5px; justify-self: start">PASS</span>
+</div>
+<div class="crit" style="display: grid; grid-template-columns: 44px minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr) 70px; gap: 12px; padding: 14px 20px; align-items: center; font-size: 14px">
+<span class="mono" style="color: #8A938D; font-size: 12px">C4</span><span style="display: flex; flex-direction: column; gap: 3px">Status is Pending<span class="mono" style="font-size: 10.5px; color: #4D5650">ERP record · code</span></span><span class="mono hide-sm" style="font-size: 12.5px">Pending</span><span class="mono hide-sm" style="font-size: 12.5px">Pending</span><span class="mono" style="font-size: 11px; font-weight: 600; color: #134B2F; background: #D7EDDF; padding: 4px 8px; border-radius: 5px; justify-self: start">PASS</span>
+</div>
+</section>
+
+<section aria-labelledby="shots" style="display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<h2 id="shots" style="margin: 0; font-size: 17px; font-weight: 700">Evidence</h2>
+<span class="mono" style="font-size: 11.5px; color: #4D5650">runs/run_0042/</span>
+</div>
+<div class="shots" style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px">
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px">
+<div style="aspect-ratio: 4 / 3; border-radius: 10px; border: 1px solid #C3C9C0; background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: #6B746E" class="mono"><span style="font-size: 11px">[screenshot]</span></div>
+<figcaption class="mono" style="font-size: 11.5px; color: #2F3632">06 · invoice list</figcaption>
+</figure>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px">
+<div style="aspect-ratio: 4 / 3; border-radius: 10px; border: 1px solid #C3C9C0; background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: #6B746E" class="mono"><span style="font-size: 11px">[INV-1042.pdf]</span></div>
+<figcaption class="mono" style="font-size: 11.5px; color: #2F3632">08 · source PDF</figcaption>
+</figure>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px">
+<div style="aspect-ratio: 4 / 3; border-radius: 10px; border: 1px solid #C3C9C0; background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: #6B746E" class="mono"><span style="font-size: 11px">[screenshot]</span></div>
+<figcaption class="mono" style="font-size: 11.5px; color: #2F3632">15 · bill created</figcaption>
+</figure>
+<figure style="margin: 0; display: flex; flex-direction: column; gap: 6px">
+<div style="aspect-ratio: 4 / 3; border-radius: 10px; border: 1px solid #C3C9C0; background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: #6B746E" class="mono"><span style="font-size: 11px">[screenshot]</span></div>
+<figcaption class="mono" style="font-size: 11.5px; color: #2F3632">V1 · verifier read-back</figcaption>
+</figure>
+</div>
+</section>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 22px">
+<section aria-labelledby="summary" style="display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 14px; background: #F7F8F5; border: 1px solid #C3C9C0">
+<h2 id="summary" style="margin: 0; font-size: 17px; font-weight: 700">Summary</h2>
+<p style="margin: 0; font-size: 15px; line-height: 1.55">Took the latest valid Globex invoice (INV-1042; INV-1041 was superseded), read the total and due date from its PDF, confirmed no bill existed for it, and created bill B-2291 after your approval.</p>
+</section>
+
+<section aria-labelledby="hiccups" style="display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 14px; background: #F7F8F5; border: 1px solid #C3C9C0">
+<h2 id="hiccups" style="margin: 0; font-size: 17px; font-weight: 700">What went wrong along the way</h2>
+<ul style="margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; font-size: 14px; line-height: 1.45">
+<li style="display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 8px"><span class="mono" style="font-size: 12px; color: #8A938D">04</span><span>Portal returned a 500. Retried once, then it loaded.</span></li>
+<li style="display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 8px"><span class="mono" style="font-size: 12px; color: #8A938D">08</span><span>The invoice PDF contained an instruction to the agent to change bank details. Ignored and flagged.</span></li>
+<li style="display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 8px"><span class="mono" style="font-size: 12px; color: #8A938D">12</span><span>The ERP button was renamed. Found "Create bill" by its role.</span></li>
+<li style="display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 8px"><span class="mono" style="font-size: 12px; color: #8A938D">13</span><span>The date was rejected. Switched to DD/MM/YYYY and asked you again.</span></li>
+</ul>
+</section>
+
+<section aria-label="Actions" style="display: flex; flex-direction: column; gap: 10px">
+<button type="button" style="min-height: 48px; border-radius: 12px; border: 0; background: #151917; color: #FFFFFF; font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"></path></svg>
+Download evidence bundle
+</button>
+<button type="button" style="min-height: 48px; border-radius: 12px; border: 1px solid #151917; background: transparent; color: #151917; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer">Open trace in Phoenix</button>
+<a href="Main.dc.html" style="min-height: 44px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600">Run another task</a>
+</section>
+</div>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1060}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>
