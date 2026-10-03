@@ -45,7 +45,8 @@ runs/<id>/          evidence (gitignored)
 - Fonts: Schibsted Grotesk (UI), IBM Plex Mono (anything the agent did, IDs, data)
 - Ground `#E9ECE6`, surface `#F7F8F5`, ink `#151917`, muted `#4D5650`, line `#C3C9C0`
 - Meaning colours only: agent action `#2238C9`, waiting on human `#B4690E` (bg `#FBEBD3`, text `#6E3F05`), verified `#1F7A4D` (bg `#D7EDDF`), stopped `#B42318` (bg `#F6DAD6`)
-- Signature elements: loop strip (Goal → … → Complete), "Done means" criteria panel, approval card with hard offset shadow, monospace action log with ADAPT/RECOVER/DECIDE tags
+- Two layers. The default view is for the person who asked for the work: plain language, mono only for data (amounts, invoice numbers). The "Technical details" switch in the top bar reveals tool calls, refs, ACT/ADAPT/RECOVER tags, tokens, run IDs and how each check was verified. Never put engine internals in the default view.
+- Signature elements: 4-phase progress bar (Understand → Do the work → Double-check → Done), "Done means" checklist, approval sheet with hard offset shadow and changed values highlighted, plain-language activity feed (`apps/console/src/feed.ts`) grouped by system
 
 ## Testing without a model key
 `apps/agent/test/scripted-llm.ts` is a test double behind the same `LLM` interface as Gemini. The e2e test drives real Chromium against the real mock apps (chaos on), through the real gate and verifier; only the model's choices are scripted. Prefer extending it over mocking Playwright or the mock apps.

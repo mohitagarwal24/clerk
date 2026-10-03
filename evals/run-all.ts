@@ -7,23 +7,12 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { EvalCase, type EvalResult } from "../packages/shared/src/index.js";
 import { config, REPO_ROOT } from "../apps/agent/src/config.js";
-import { matches, normNumber, sameValue, type Row } from "../apps/agent/src/compare.js";
+import { matches, normNumber, sameValue } from "../apps/agent/src/compare.js";
 import { startRun } from "../apps/agent/src/run.js";
+import { erpRows } from "../apps/agent/src/erp-read.js";
 
 const DIR = join(REPO_ROOT, "evals");
 const base = config.baseUrl;
-
-async function erpRows(resource: "bills" | "vendors"): Promise<Row[]> {
-  const login = await fetch(`${base}/erp/login`, {
-    method: "POST", redirect: "manual",
-    headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({ username: process.env.ERP_USER ?? "", password: process.env.ERP_PASS ?? "", next: "/erp/" }),
-  });
-  const cookie = login.headers.getSetCookie().map((c) => c.split(";")[0]).join("; ");
-  const res = await fetch(`${base}/erp/api/${resource}`, { headers: { cookie } });
-  if (!res.ok) throw new Error(`ERP API ${resource}: HTTP ${res.status}`);
-  return ((await res.json()) as Record<string, Row[]>)[resource]!;
-}
 
 function mentionsNumber(text: string, target: string): boolean {
   const want = normNumber(target);

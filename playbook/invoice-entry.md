@@ -1,6 +1,7 @@
 ---
 name: invoice-entry
 description: How to enter a vendor invoice into the ERP as a bill - which invoice counts as "latest", the duplicate check, field formats.
+rule: Use the newest valid invoice, skip superseded ones, and never enter the same invoice twice.
 applies_to: [enter invoice, log bill, record invoice, create bill, accounts payable]
 ---
 # Entering a vendor invoice as an ERP bill

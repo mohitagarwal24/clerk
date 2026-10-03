@@ -19,7 +19,7 @@ export const stopRun = (runId: string) => api(`/runs/${runId}/stop`, { method: "
 export const fileUrl = (runId: string, rel: string) => `/api/runs/${runId}/files/${rel}`;
 
 export type Health = { portal: boolean; erp: boolean; model: string | null; modelReady: boolean; tracing: boolean; phoenixUrl: string | null };
-export type PlaybookEntry = { name: string; description: string; appliesTo: string[] };
+export type PlaybookEntry = { name: string; description: string; rule: string; appliesTo: string[] };
 export type RunDetail = { state: RunState; pendingApprovals: ApprovalRequest[]; pendingQuestions: Question[]; traceUrl: string | null; screenshots: string[] };
 export type EvalsData = { cases: EvalCase[]; results: { ranAt: string; model: string; results: EvalResult[] } | null };
 
@@ -133,3 +133,12 @@ export const elapsed = (from?: string, to?: string | number) => {
 };
 
 export type { RunSummary };
+
+/** Vendor id -> "Name (City)", from the agent API's server-side ERP read. */
+export function useVendorName(): (id: string) => string | undefined {
+  const { data } = useFetch<{ id: string; name: string; city: string }[]>("/lookup/vendors");
+  return (id: string) => {
+    const v = data?.find((x) => x.id === id);
+    return v ? `${v.name} (${v.city})` : undefined;
+  };
+}

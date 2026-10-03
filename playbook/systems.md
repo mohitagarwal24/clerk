@@ -1,6 +1,7 @@
 ---
 name: systems
 description: Where things live at Acme Corp - Vendor Portal (source invoices) and ERP (bills, vendors) - with URLs and page layout.
+rule: Invoices come from the Vendor Portal; bills and vendors live in the ERP.
 applies_to: [any task, portal, erp, invoices, bills, vendors]
 ---
 # Acme Corp systems

@@ -9,7 +9,7 @@ import { GoalSpec } from "@clerk/shared";
 describe("playbook skills", () => {
   it("parses frontmatter", () => {
     const s = parseSkill("---\nname: a\ndescription: does a\napplies_to: [x, y z]\n---\n# Body");
-    expect(s).toEqual({ name: "a", description: "does a", appliesTo: ["x", "y z"], body: "# Body" });
+    expect(s).toEqual({ name: "a", description: "does a", rule: undefined, appliesTo: ["x", "y z"], body: "# Body" });
   });
   it("loads the real playbook and builds an index without bodies", () => {
     const skills = loadPlaybook();

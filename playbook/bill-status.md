@@ -1,6 +1,7 @@
 ---
 name: bill-status
 description: Bill statuses, what "overdue" and "outstanding" mean, and how to escalate or mark bills paid.
+rule: Overdue means unpaid past its due date; outstanding is everything still unpaid.
 applies_to: [overdue, escalate, outstanding, total owed, mark paid, bill status, reconcile]
 ---
 # Bill status rules

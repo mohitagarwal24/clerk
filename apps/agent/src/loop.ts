@@ -121,7 +121,7 @@ export async function runLoop(d: LoopDeps, budget: number): Promise<LoopResult> 
     }
     const why = String(call.args.why ?? "");
     if (typeof call.args.plan_step === "number" && call.args.plan_step - 1 > state.planDone) {
-      state.planDone = Math.min(call.args.plan_step - 1, state.goal!.plan.length);
+      state.planDone = Math.min(call.args.plan_step - 1, state.goal!.plan.length - 1);
       emit({ type: "plan_progress", done: state.planDone });
     }
 

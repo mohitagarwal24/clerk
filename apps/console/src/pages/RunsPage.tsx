@@ -1,19 +1,16 @@
 import { useFetch, type RunSummary } from "../api.js";
-import { RunRow } from "./NewTask.js";
+import { TaskRow } from "./NewTask.js";
 
 export function RunsPage() {
   const { data, error } = useFetch<RunSummary[]>("/runs?limit=100");
   return (
     <>
-      <header style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        <div className="eyebrow">Runs · evidence in runs/&lt;id&gt;/</div>
-        <h1 style={{ margin: 0, fontSize: 40, fontWeight: 800, letterSpacing: "-.03em" }}>All runs</h1>
-      </header>
-      <section className="card" style={{ overflow: "hidden" }}>
-        {error && <div className="empty">{error}</div>}
-        {data?.length === 0 && <div className="empty">No runs yet. <a href="#/">Start one</a>.</div>}
-        {data?.map((r) => <RunRow key={r.id} r={r} />)}
-      </section>
+      <header className="hero"><h1>Tasks</h1><p>Everything Clerk has worked on, newest first. Open one to see the result and the evidence.</p></header>
+      <div className="panel flush">
+        {error && <div className="empty" style={{ padding: 22 }}>{error}</div>}
+        {data?.length === 0 && <div className="empty" style={{ padding: 22 }}>No tasks yet. <a href="#/">Start one</a>.</div>}
+        <ul className="tasklist">{data?.map((r) => <TaskRow key={r.id} r={r} />)}</ul>
+      </div>
     </>
   );
 }

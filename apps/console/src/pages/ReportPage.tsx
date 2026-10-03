@@ -1,120 +1,141 @@
+import { Fragment } from "react";
 import type { RunState } from "@clerk/shared";
-import { elapsed, fileUrl, useFetch, type RunDetail } from "../api.js";
-import { Chip, Icon } from "../ui.js";
+import { fileUrl, useFetch, useRun, type RunDetail } from "../api.js";
+import { Checks, Feed, ZoomImage } from "../components.js";
+import { approvalDone, changedLabels, duration, humanize, Icon, useTech } from "../ui.js";
 
 export function ReportPage({ id }: { id: string }) {
   const { data, error } = useFetch<RunDetail>(`/runs/${id}`);
-  if (error) return <div className="card pad">{error}</div>;
+  const view = useRun(id);
+  const { tech } = useTech();
+  if (error) return <div className="panel">{error}</div>;
   if (!data) return <div className="muted">Loading…</div>;
   const s = data.state;
   const v = s.verification;
-  const tone = s.status === "DONE" ? "ok" : s.status === "FAILED" ? "stop" : s.finish?.outcome === "blocked" ? "wait" : "stop";
+  const blocked = s.finish?.outcome === "blocked";
+  const tone = s.status === "DONE" ? "ok" : blocked ? "wait" : "stop";
   const passed = v ? v.criteria.filter((c) => c.pass).length : 0;
-  const approvals = s.approvals.filter((a) => a.decision).length;
+  const decided = s.approvals.filter((a) => a.decision);
 
   return (
     <>
-      <div className="crumbs">
-        <a href={`#/runs/${id}`}>{id}</a><span>/</span><span>{s.step} steps</span><span>/</span><span>{s.recoveries.length} recoveries</span><span>/</span>
-        <span>{approvals} approvals</span><span>/</span><span>{elapsed(s.startedAt, s.endedAt)}</span><span>/</span><span>chaos {s.chaos}</span>
-      </div>
-
-      <section aria-labelledby="verdict" className={`verdict ${tone}`}>
-        <div className="icon" style={{ background: tone === "ok" ? "#D7EDDF" : tone === "wait" ? "#FBEBD3" : "#F6DAD6" }}>
-          {tone === "ok" ? Icon.check("#133D28", 38) : tone === "wait" ? Icon.pause("#6E3F05") : Icon.cross("#8A1C12")}
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 0 }}>
-          <span className="mono" style={{ fontSize: 12, letterSpacing: ".12em", opacity: 0.8 }}>
-            {s.status === "DONE" ? `VERIFIED · ${passed} OF ${v?.criteria.length} · SOURCE RE-CHECK + ERP RECORD CHECK`
-              : s.status === "FAILED" ? "FAILED" : `NEEDS ATTENTION${v ? ` · CHECKS ${passed} OF ${v.criteria.length}` : ""}`}
-          </span>
-          <h1 id="verdict">{s.status === "DONE" ? "Done. " : s.finish?.outcome === "blocked" ? "Stopped on purpose. " : ""}{s.finish?.summary ?? s.stopReason ?? s.request}</h1>
+      <section className={`outcome ${tone}`} aria-labelledby="verdict">
+        <div className="icon">{tone === "ok" ? Icon.check("#134B2F", 30) : tone === "wait" ? Icon.pause("#6E3F05") : Icon.cross("#8A1C12", 30)}</div>
+        <div>
+          <div className="kicker">{s.status === "DONE" ? "Done, and checked independently" : blocked ? "Clerk stopped on purpose and needs you" : s.status === "FAILED" ? "Clerk couldn't finish this task" : "Clerk stopped and needs you"}</div>
+          <h1 id="verdict">{s.finish?.summary ?? s.stopReason ?? "No summary."}</h1>
+          <div className="task">Task: {s.request}</div>
+          <div className="meta">
+            Took {duration(s.startedAt, s.endedAt)}
+            {v && v.criteria.length > 0 && ` · ${passed} of ${v.criteria.length} checks passed`}
+            {decided.length > 0 && ` · ${decided.length} approval${decided.length > 1 ? "s" : ""} from you`}
+          </div>
         </div>
       </section>
 
-      <div className="cols-report">
-        <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-          <section className="card" aria-labelledby="checks" style={{ overflow: "hidden" }}>
-            <div className="card-head"><h2 id="checks">What the verifier checked</h2><span className="mono" style={{ fontSize: 11.5, color: "#4D5650" }}>fresh browser login · never saw the agent's facts or reasoning</span></div>
-            {!v && <div className="empty">No verification ran ({s.stopReason ?? "the run stopped before finishing"}).</div>}
-            {v && (
-              <>
-                <div className="critrow head"><span>ID</span><span>CRITERION</span><span className="hide-sm">EXPECTED</span><span className="hide-sm">FOUND</span><span>RESULT</span></div>
-                {v.criteria.map((c) => (
-                  <div key={c.id} className="critrow">
-                    <span className="mono" style={{ color: "#8A938D", fontSize: 12 }}>{c.id}</span>
-                    <span>{c.check}<span className="how">{c.how}{c.note ? ` · ${c.note}` : ""}</span></span>
-                    <span className="val hide-sm">{c.expected}</span>
-                    <span className="val hide-sm">{c.found}</span>
-                    <span><Chip tone={c.pass ? "ok" : "stop"}>{c.pass ? "PASS" : "FAIL"}</Chip></span>
-                  </div>
-                ))}
-                {v.source && <div className="note" style={{ padding: "12px 20px", borderTop: "1px solid #E1E5DE" }}>Source re-check: {v.source.ok ? "ok" : "NOT OK"} · {v.source.document} · re-read {Object.entries(v.source.values).map(([k, x]) => `${k}=${x}`).join(", ") || "nothing"}</div>}
-                {v.readback && <div className="note" style={{ padding: "0 20px 14px" }}>LLM read-back (evidence only, never decides): {v.readback.comment}</div>}
-              </>
-            )}
+      <div className="report-grid">
+        <div className="col">
+          <section className="panel" aria-labelledby="checks">
+            <h2 id="checks" className="section">How we know it's right</h2>
+            {s.goal && v ? <Checks criteria={s.goal.success_criteria} results={v.criteria} />
+              : <div className="muted">No check ran: {s.stopReason ?? "the task stopped before finishing"}.</div>}
+            {v && <p className="small muted" style={{ margin: "14px 0 0" }}>A separate checker signed in on its own, re-read the source document, and compared the ERP record field by field. It never saw Clerk's notes.</p>}
           </section>
+
+          <section className="panel" aria-labelledby="steps">
+            <details>
+              <summary><h2 id="steps" className="section" style={{ margin: 0, display: "inline" }}>Everything Clerk did ({s.step} steps) ›</h2></summary>
+              <div style={{ marginTop: 14 }}><Feed v={view} live={false} /></div>
+            </details>
+          </section>
+
           <Evidence s={s} files={data.screenshots} />
+          {tech && <TechReport s={s} traceUrl={data.traceUrl} />}
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-          <section className="card pad" aria-labelledby="summary">
-            <h2 id="summary" style={{ margin: 0, fontSize: 17 }}>Summary</h2>
-            <p style={{ margin: 0, fontSize: 15, lineHeight: 1.55 }}>{s.finish?.summary ?? s.stopReason}</p>
-            {s.finish?.answers.length ? <dl className="memory">{s.finish.answers.map((a) => [<dt key={`k${a.key}`}>{a.key}</dt>, <dd key={`v${a.key}`}>{a.value}</dd>])}</dl> : null}
-            <div className="note">{s.usage.calls} model calls · {(s.usage.inputTokens + s.usage.outputTokens).toLocaleString()} tokens · est. ${s.usage.costUsd.toFixed(4)}</div>
-          </section>
-          <Hiccups s={s} />
-          {s.questions.length > 0 && (
-            <section className="card pad"><h2 style={{ margin: 0, fontSize: 17 }}>Questions asked</h2>
-              <ul className="hiccups">{s.questions.map((q) => <li key={q.id}><span className="mono" style={{ fontSize: 12, color: "#8A938D" }}>{String(q.step).padStart(2, "0")}</span><span>{q.question} <b>→ {q.answer ?? "(unanswered)"}</b></span></li>)}</ul>
+        <div className="col">
+          {s.finish?.answers.length ? (
+            <section className="panel" aria-labelledby="result">
+              <h2 id="result" className="section">Result</h2>
+              <dl className="kv">{s.finish.answers.map((a) => <Fragment key={a.key}><dt>{humanize(a.key)}</dt><dd className="mono">{a.value}</dd></Fragment>)}</dl>
+            </section>
+          ) : null}
+
+          <AlongTheWay s={s} />
+          {(decided.length > 0 || s.questions.length > 0) && (
+            <section className="panel" aria-labelledby="decisions">
+              <h2 id="decisions" className="section">Your decisions</h2>
+              <ul className="along">
+                {decided.map((a) => (
+                  <li key={a.id} className={a.decision!.approve ? "ok" : "stop"}>
+                    You {a.decision!.approve ? "approved" : "rejected"} {a.previous ? `the corrected version (${changedLabels(a).join(", ") || "same values"} changed)` : approvalDone({ path: a.path, fields: a.sent ?? a.fields })}
+                    {a.decision!.fields ? " with your edits" : ""}{a.decision!.note && !a.decision!.approve ? `: ${a.decision!.note}` : ""}
+                  </li>
+                ))}
+                {s.questions.map((q) => <li key={q.id} className="wait">Clerk asked “{q.question}” You answered: {q.answer ?? "(no answer)"}</li>)}
+              </ul>
             </section>
           )}
-          <section aria-label="Actions" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <a className="btn dark" href={fileUrl(id, "summary.md")} target="_blank" rel="noreferrer">Evidence summary (runs/{id}/summary.md)</a>
-            <a className="btn ghost" href={fileUrl(id, "actions.jsonl")} target="_blank" rel="noreferrer">actions.jsonl</a>
-            {data.traceUrl && <a className="btn ghost" href={data.traceUrl} target="_blank" rel="noreferrer">Open trace in Phoenix</a>}
-            <a href="#/" style={{ textAlign: "center", fontWeight: 600, padding: 12 }}>Run another task</a>
-          </section>
+          <a className="btn primary" href="#/">Start another task</a>
         </div>
       </div>
     </>
   );
 }
 
-function Hiccups({ s }: { s: RunState }) {
-  const items: { step: number; text: string }[] = [
-    ...s.recoveries.map((r) => ({ step: r.step, text: r.kind === "transient" ? `Server error, retried: ${r.detail}.` : r.kind === "stale_ref" ? "The page changed under the agent (stale element). It re-read the page and picked again." : `${r.kind}: ${r.detail}` })),
-    ...s.injectionFlags.map((f) => ({ step: f.step, text: `Text in ${f.where} was addressed to an AI agent ("${f.text.slice(0, 90)}…"). Ignored and flagged.` })),
-    ...s.approvals.filter((a) => a.previous).map((a) => ({ step: a.step, text: `Resubmitted ${a.path} with changed values; you were asked again.` })),
-    ...s.approvals.filter((a) => a.decision && !a.decision.approve).map((a) => ({ step: a.step, text: `You rejected ${a.method} ${a.path}${a.decision?.note ? `: ${a.decision.note}` : ""}.` })),
+function AlongTheWay({ s }: { s: RunState }) {
+  const items = [
+    ...s.recoveries.map((r) => ({ step: r.step, tone: "wait", text: r.kind === "transient" ? "A system returned an error; Clerk waited and tried again." : r.kind === "stale_ref" ? "A page changed while Clerk was using it; it looked again and carried on." : r.detail })),
+    ...s.injectionFlags.map((f) => ({ step: f.step, tone: "stop", text: "A document contained an instruction aimed at AI agents (to change bank details). Clerk ignored it." })),
+    ...s.approvals.filter((a) => a.previous).map((a) => ({ step: a.step, tone: "agent", text: `The ERP rejected the first attempt, so Clerk corrected ${changedLabels(a).join(", ").toLowerCase() || "the values"} and asked you again.` })),
   ].sort((a, b) => a.step - b.step);
+  // The same kind of event twice reads better as one line with a count.
+  const grouped = items.reduce<{ tone: string; text: string; n: number }[]>((acc, x) => {
+    const hit = acc.find((y) => y.text === x.text);
+    if (hit) hit.n++; else acc.push({ tone: x.tone, text: x.text, n: 1 });
+    return acc;
+  }, []);
   return (
-    <section className="card pad" aria-labelledby="hiccups">
-      <h2 id="hiccups" style={{ margin: 0, fontSize: 17 }}>What went wrong along the way</h2>
-      {items.length === 0 ? <div className="muted" style={{ fontSize: 14 }}>Nothing. Clean run.</div> : (
-        <ul className="hiccups">{items.map((x, i) => <li key={i}><span className="mono" style={{ fontSize: 12, color: "#8A938D" }}>{String(x.step).padStart(2, "0")}</span><span>{x.text}</span></li>)}</ul>
-      )}
+    <section className="panel" aria-labelledby="along">
+      <h2 id="along" className="section">What came up along the way</h2>
+      {grouped.length ? <ul className="along">{grouped.map((x, i) => <li key={i} className={x.tone}>{x.text}{x.n > 1 ? ` (${x.n} times)` : ""}</li>)}</ul> : <div className="muted">Nothing unexpected.</div>}
     </section>
   );
 }
 
 function Evidence({ s, files }: { s: RunState; files: string[] }) {
-  // A few telling screenshots: first page, mid-run, the last agent page, and the verifier's read-back.
-  const pick = [...new Set([files[1] ?? files[0], files[Math.floor(files.length / 2)], files.at(-1)])].filter((f): f is string => !!f);
-  const shots = pick.map((f, i) => ({ src: `screenshots/${f}`, cap: `${f.replace(".png", "").replace(/^0/, "")} · ${["early page", "mid-run", "last page"][pick.length === 3 ? i : i === pick.length - 1 ? 2 : i]}` }));
-  if (s.verification?.readback?.screenshot) shots.push({ src: s.verification.readback.screenshot, cap: "V · verifier read-back" });
+  const pick = [...new Set([files[Math.floor(files.length / 3)], files.at(-1)])].filter((f): f is string => !!f);
+  const shots = pick.map((f) => ({ src: `screenshots/${f}`, cap: `Step ${Number(f.replace(".png", ""))}` }));
+  if (s.verification?.readback?.screenshot) shots.push({ src: s.verification.readback.screenshot, cap: "What the checker saw in the ERP" });
   return (
-    <section aria-labelledby="shots" style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <h2 id="shots" style={{ margin: 0, fontSize: 17 }}>Evidence</h2><span className="mono" style={{ fontSize: 11.5, color: "#4D5650" }}>runs/{s.id}/</span>
-      </div>
-      <div className="shots">
-        {shots.map((x) => (
-          <figure key={x.src}><a href={fileUrl(s.id, x.src)} target="_blank" rel="noreferrer"><img src={fileUrl(s.id, x.src)} alt={x.cap} onError={(e) => { (e.target as HTMLImageElement).style.visibility = "hidden"; }} /></a><figcaption>{x.cap}</figcaption></figure>
-        ))}
-      </div>
-      {s.downloads.length > 0 && <div className="note">Source documents: {s.downloads.map((d) => <a key={d.name} href={fileUrl(s.id, `downloads/${d.name}`)} target="_blank" rel="noreferrer" style={{ marginRight: 10 }}>{d.name}</a>)}</div>}
+    <section className="panel" aria-labelledby="evidence">
+      <h2 id="evidence" className="section">Evidence</h2>
+      <div className="shots">{shots.map((x) => <figure key={x.src}><ZoomImage src={fileUrl(s.id, x.src)} alt={x.cap} /><figcaption>{x.cap}</figcaption></figure>)}</div>
+      {s.downloads.length > 0 && (
+        <p className="small" style={{ margin: "14px 0 0" }}>
+          Source {s.downloads.length > 1 ? "documents" : "document"}: {s.downloads.map((d) => <a key={d.name} href={fileUrl(s.id, `downloads/${d.name}`)} target="_blank" rel="noreferrer" style={{ marginRight: 10 }}>{Icon.doc} {d.name}</a>)}
+        </p>
+      )}
+    </section>
+  );
+}
+
+function TechReport({ s, traceUrl }: { s: RunState; traceUrl: string | null }) {
+  const v = s.verification;
+  return (
+    <section className="panel tech-panel">
+      <h2 className="section">Verification internals</h2>
+      <dl className="kv small">
+        <dt>Run</dt><dd className="mono">{s.id} · chaos {s.chaos} · {s.status} · {s.step}/{s.maxSteps} steps</dd>
+        <dt>Model use</dt><dd className="mono">{s.usage.calls} calls · {(s.usage.inputTokens + s.usage.outputTokens).toLocaleString()} tokens · ${s.usage.costUsd.toFixed(4)}</dd>
+        {v?.source && <><dt>Source re-check</dt><dd>{v.source.ok ? "ok" : "NOT OK"} · {v.source.document} · re-read {Object.entries(v.source.values).map(([k, x]) => `${k}=${x}`).join(", ")}</dd></>}
+        {v?.readback && <><dt>LLM read-back</dt><dd>{v.readback.comment} <span className="faint">(evidence only, never decides)</span></dd></>}
+        {s.stopReason && <><dt>Stop reason</dt><dd>{s.stopReason}</dd></>}
+        <dt>Files</dt><dd className="mono">
+          <a href={fileUrl(s.id, "summary.md")} target="_blank" rel="noreferrer">summary.md</a> · <a href={fileUrl(s.id, "actions.jsonl")} target="_blank" rel="noreferrer">actions.jsonl</a> · <a href={fileUrl(s.id, "verification.json")} target="_blank" rel="noreferrer">verification.json</a> · <a href={fileUrl(s.id, "events.jsonl")} target="_blank" rel="noreferrer">events.jsonl</a>
+        </dd>
+        {traceUrl && <><dt>Trace</dt><dd><a href={traceUrl} target="_blank" rel="noreferrer">Open in Phoenix</a></dd></>}
+      </dl>
     </section>
   );
 }

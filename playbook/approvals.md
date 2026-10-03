@@ -1,6 +1,7 @@
 ---
 name: approvals
 description: What needs a human - every ERP write is held for approval at the network layer; when to ask the user instead of guessing.
+rule: Every change to the ERP waits for a person to approve it; unclear requests get a question, not a guess.
 applies_to: [any task, erp write, approval, ask user, ambiguity]
 ---
 # Approvals and asking

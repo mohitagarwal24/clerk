@@ -16,6 +16,7 @@ import { join, normalize, resolve } from "node:path";
 import { z } from "zod";
 import { ApprovalDecision, ChaosPreset, RunState, summarize, TERMINAL, type ApprovalRequest, type Question, type RunEvent } from "@clerk/shared";
 import { config, REPO_ROOT, RUNS_DIR } from "./config.js";
+import { erpRows } from "./erp-read.js";
 import { llmConfigured, type LLM } from "./llm.js";
 import { startRun, type Run } from "./run.js";
 import { loadPlaybook } from "./skills.js";
@@ -46,7 +47,19 @@ export function createServer(opts: { llm?: LLM } = {}) {
     return c.json({ portal: await ping("/portal/login"), erp: await ping("/erp/login"), model: config.model || null, modelReady: !!opts.llm || llmConfigured(), tracing: config.tracing, phoenixUrl: config.tracing ? config.phoenixUrl : null });
   });
 
-  app.get("/playbook", (c) => c.json(loadPlaybook().map((s) => ({ name: s.name, description: s.description, appliesTo: s.appliesTo }))));
+  // Vendor names for the approval card, so a human sees "Globex Corporation", not "V-001".
+  let vendorCache: { at: number; rows: { id: string; name: string; city: string }[] } | undefined;
+  app.get("/lookup/vendors", async (c) => {
+    if (!vendorCache || Date.now() - vendorCache.at > 60_000) {
+      try {
+        const rows = await erpRows("vendors");
+        vendorCache = { at: Date.now(), rows: rows.map((v) => ({ id: String(v.id), name: String(v.name), city: String(v.city) })) };
+      } catch { return c.json([]); }
+    }
+    return c.json(vendorCache.rows);
+  });
+
+  app.get("/playbook", (c) => c.json(loadPlaybook().map((s) => ({ name: s.name, description: s.description, rule: s.rule ?? s.description, appliesTo: s.appliesTo }))));
 
   app.post("/runs", async (c) => {
     const body = z.object({ request: z.string().min(3), chaos: ChaosPreset.default("off") }).parse(await c.req.json());

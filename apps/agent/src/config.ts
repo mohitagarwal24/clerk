@@ -37,7 +37,7 @@ export const config = {
 
 export type System = "portal" | "erp";
 
-/** Only the login tool may call this. */
+/** Credentials for code that signs in: the login tool, the verifier and server-side ERP reads. Never put in a prompt. */
 export function secret(system: System): { user: string; pass: string } {
   const u = system === "portal" ? process.env.PORTAL_USER : process.env.ERP_USER;
   const p = system === "portal" ? process.env.PORTAL_PASS : process.env.ERP_PASS;

@@ -4,7 +4,8 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { PLAYBOOK_DIR } from "./config.js";
 
-export type Skill = { name: string; description: string; appliesTo: string[]; body: string };
+/** `rule` is an optional one-line summary for people (the console); the model uses `description`. */
+export type Skill = { name: string; description: string; rule?: string; appliesTo: string[]; body: string };
 
 export function parseSkill(text: string): Skill {
   const m = text.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
@@ -16,7 +17,7 @@ export function parseSkill(text: string): Skill {
   }
   const appliesTo = (meta.applies_to ?? "").replace(/^\[|\]$/g, "").split(",").map((s) => s.trim()).filter(Boolean);
   if (!meta.name || !meta.description) throw new Error("Skill frontmatter needs name and description");
-  return { name: meta.name, description: meta.description, appliesTo, body: m[2]!.trim() };
+  return { name: meta.name, description: meta.description, rule: meta.rule, appliesTo, body: m[2]!.trim() };
 }
 
 export function loadPlaybook(dir = PLAYBOOK_DIR): Skill[] {

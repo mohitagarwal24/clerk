@@ -1,5 +1,4 @@
 import { useFetch, type EvalsData } from "../api.js";
-import { Chip } from "../ui.js";
 
 export function EvalsPage() {
   const { data, error } = useFetch<EvalsData>("/evals");
@@ -7,49 +6,41 @@ export function EvalsPage() {
   const byId = new Map(results.map((r) => [r.id, r]));
   const steps = results.map((r) => r.steps).sort((a, b) => a - b);
   const median = steps.length ? steps[Math.floor(steps.length / 2)] : null;
-  const cost = results.length ? results.reduce((s, r) => s + r.costUsd, 0) / results.length : null;
-  const recovered = results.reduce((s, r) => s + r.recoveries, 0);
+  const secs = results.length ? results.reduce((s, r) => s + r.ms, 0) / results.length / 1000 : null;
   const n = data?.cases.length ?? 0;
 
   return (
     <>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 20, flexWrap: "wrap" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          <div className="eyebrow">Evals · frozen code · held-out requests</div>
-          <h1 style={{ margin: 0, fontSize: 44, lineHeight: 1.05, fontWeight: 800, letterSpacing: "-.03em" }}>Does it generalize?</h1>
-          <p style={{ margin: 0, fontSize: 16, lineHeight: 1.5, color: "#2F3632", maxWidth: 640 }}>Each case runs through the same loop, gate and verifier, most with chaos on. Pass means the deterministic checks passed, or the agent correctly stopped and asked.</p>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end" }}>
-          <code className="cmd">pnpm evals</code>
-          <span className="note">{data?.results ? `last run ${new Date(data.results.ranAt).toLocaleString()} · ${data.results.model}` : "not run yet"}</span>
-        </div>
+      <header className="hero">
+        <h1>Does it generalise?</h1>
+        <p>Requests Clerk was never tuned on, run on frozen code with practice-mode glitches on. A case passes when the independent checks pass, or when Clerk correctly stops and asks.</p>
       </header>
 
-      <section aria-label="Summary" className="tiles">
-        <div><span className="k">PASSED</span><span className="v">{results.length ? `${results.filter((r) => r.pass).length} / ${results.length}` : `– / ${n}`}</span></div>
-        <div><span className="k">MEDIAN STEPS</span><span className="v">{median ?? "–"}</span></div>
-        <div><span className="k">RECOVERIES</span><span className="v">{results.length ? recovered : "–"}</span></div>
-        <div><span className="k">COST PER RUN</span><span className="v">{cost !== null ? `$${cost.toFixed(3)}` : "–"}</span></div>
+      <section className="tiles" aria-label="Summary">
+        <div><span className="k">Passed</span><span className="v">{results.length ? `${results.filter((r) => r.pass).length} / ${results.length}` : `– / ${n}`}</span></div>
+        <div><span className="k">Median steps</span><span className="v">{median ?? "–"}</span></div>
+        <div><span className="k">Recoveries</span><span className="v">{results.length ? results.reduce((s, r) => s + r.recoveries, 0) : "–"}</span></div>
+        <div><span className="k">Average time</span><span className="v">{secs !== null ? `${Math.round(secs / 60)}m ${Math.round(secs % 60)}s` : "–"}</span></div>
       </section>
 
-      <section className="card" aria-labelledby="cases" style={{ overflow: "hidden" }}>
-        <div className="card-head"><h2 id="cases">Cases</h2><span className="mono" style={{ fontSize: 11.5, color: "#4D5650" }}>evals/cases.json · results in evals/results.md</span></div>
-        {error && <div className="empty">{error}</div>}
-        <div className="erow head"><span>ID</span><span>REQUEST</span><span className="hide-sm">EXPECTED</span><span className="hide-sm">STEPS</span><span>RESULT</span></div>
+      <div className="panel flush">
+        {error && <div className="empty" style={{ padding: 22 }}>{error}</div>}
+        <div className="erow head"><span>ID</span><span>Request</span><span className="hide-sm">Expected</span><span className="hide-sm">Steps</span><span>Result</span></div>
         {data?.cases.map((c) => {
           const r = byId.get(c.id);
           return (
             <div key={c.id} className="erow">
-              <span className="mono" style={{ fontSize: 12, color: "#8A938D" }}>{c.id}</span>
-              <span style={{ display: "flex", flexDirection: "column", gap: 3, minWidth: 0 }}>{c.request}
-                <span className="mono" style={{ fontSize: 10.5, color: "#4D5650" }}>{c.tag} · chaos {c.chaos}{r && !r.pass ? ` · ${r.reasons.join("; ")}` : ""}</span></span>
-              <span className="mono hide-sm" style={{ fontSize: 12, color: "#2F3632" }}>{c.expect}</span>
-              <span className="mono hide-sm" style={{ fontSize: 12, color: "#4D5650" }}>{r ? r.steps : "–"}</span>
-              <span>{r ? <a href={`#/runs/${r.runId}/report`} style={{ textDecoration: "none" }}><Chip tone={r.pass ? "ok" : "stop"}>{r.pass ? "PASS" : "FAIL"} · {r.status === "DONE" ? "done" : r.status === "NEEDS_ATTENTION" ? "stopped" : r.status.toLowerCase()}</Chip></a> : <Chip tone="neutral">NOT RUN</Chip>}</span>
+              <span className="mono faint small">{c.id}</span>
+              <span style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>{c.request}
+                <span className="small muted">{c.tag}{r && !r.pass ? ` · ${r.reasons.join("; ")}` : ""}</span></span>
+              <span className="small muted hide-sm">{c.expect}</span>
+              <span className="mono small muted hide-sm">{r ? r.steps : "–"}</span>
+              <span>{r ? <a href={`#/runs/${r.runId}/report`} className={`badge ${r.pass ? "ok" : "stop"}`} style={{ textDecoration: "none" }}>{r.pass ? "Pass" : "Fail"}</a> : <span className="badge" style={{ background: "var(--surface-2)", color: "var(--muted)" }}>Not run</span>}</span>
             </div>
           );
         })}
-      </section>
+      </div>
+      <p className="small muted">Run them with <code className="cmd">pnpm evals</code>{data?.results ? ` · last run ${new Date(data.results.ranAt).toLocaleString()} on ${data.results.model}` : ""}</p>
     </>
   );
 }
