@@ -27,7 +27,7 @@ export function ReportPage({ id }: { id: string }) {
           <div className="task">Task: {s.request}</div>
           <div className="meta">
             Took {duration(s.startedAt, s.endedAt)}
-            {v && v.criteria.length > 0 && ` · ${passed} of ${v.criteria.length} checks passed`}
+            {v && v.criteria.length > 0 && !blocked && ` · ${passed} of ${v.criteria.length} checks passed`}{blocked && !s.approvals.some((a) => a.decision?.approve) && " · nothing was changed"}
             {decided.length > 0 && ` · ${decided.length} approval${decided.length > 1 ? "s" : ""} from you`}
           </div>
         </div>
@@ -36,10 +36,11 @@ export function ReportPage({ id }: { id: string }) {
       <div className="report-grid">
         <div className="col">
           <section className="panel" aria-labelledby="checks">
-            <h2 id="checks" className="section">How we know it's right</h2>
-            {s.goal && v ? <Checks criteria={s.goal.success_criteria} results={v.criteria} />
+            <h2 id="checks" className="section">{blocked ? "What the request would have needed" : "How we know it's right"}</h2>
+            {s.goal && v ? <Checks criteria={s.goal.success_criteria} results={v.criteria} stopped={blocked} />
               : <div className="muted">No check ran: {s.stopReason ?? "the task stopped before finishing"}.</div>}
-            {v && <p className="small muted" style={{ margin: "14px 0 0" }}>A separate checker signed in on its own, re-read the source document, and compared the ERP record field by field. It never saw Clerk's notes.</p>}
+            {v && !blocked && <p className="small muted" style={{ margin: "14px 0 0" }}>A separate checker signed in on its own, re-read the source document, and compared the ERP record field by field. It never saw Clerk's notes.</p>}
+            {v && blocked && <p className="small muted" style={{ margin: "14px 0 0" }}>Clerk stopped on purpose, so these were not expected to be met. {s.approvals.some((a) => a.decision?.approve) ? "" : "Nothing was changed in the ERP."}</p>}
           </section>
 
           <section className="panel" aria-labelledby="steps">

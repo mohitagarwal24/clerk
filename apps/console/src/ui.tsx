@@ -60,7 +60,16 @@ const FIELD_LABELS: Record<string, string> = {
   contact_email: "Contact e-mail", bank_account: "Bank account", bank_ifsc: "IFSC",
 };
 export const fieldLabel = (name: string) => FIELD_LABELS[name] ?? humanize(name);
-export const humanize = (key: string) => { const s = key.replace(/[_-]+/g, " ").trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
+/** Criteria text sometimes contains "$source.amount"; say "the amount on the source document". */
+export const plainCheck = (text: string) =>
+  text.replace(/\$source\.(\w+)/g, (_, k: string, at: number) => {
+    const words = k.toLowerCase().split("_").filter((w) => w.length > 2);
+    const before = text.slice(Math.max(0, at - 30), at).toLowerCase();
+    // "amount $source.amount" -> "amount as on the source document"; otherwise name the field.
+    return words.some((w) => before.includes(w)) ? "as on the source document" : `the ${k.replace(/_/g, " ").replace(/\bno\b/, "number")} on the source document`;
+  });
+
+export const humanize = (key: string) => { const s = key.replace(/^\$?source\./i, "").replace(/[_.-]+/g, " ").trim(); return s.charAt(0).toUpperCase() + s.slice(1); };
 
 export function approvalTitle(req: Pick<ApprovalRequest, "path" | "fields">, vendorName?: (id: string) => string | undefined): string {
   const p = req.path;

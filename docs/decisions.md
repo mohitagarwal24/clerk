@@ -78,3 +78,6 @@ E1, E3 and E7 now pass. Two cases that passed before failed (kept in `evals/resu
 
 ## 2026-10-03 — Fourth eval run (7/8)
 Everything passed except E6: the agent asked which Acme Supplies (correct), created the bill (verification passed 2/2), then re-checked the ERP, saw its own new bill and finished "blocked: a bill already exists". It did not connect the write it had sent with the record it was looking at. The approvals section of the step prompt now lists the values each approved write actually sent, and the system prompt says a record matching your own approved write is the result of your work, not a duplicate.
+
+## 2026-10-03 — Fifth eval run (7/8) and stopping the loop
+E6 passed this time (asked which Acme, created the right bill); E2, which had passed in all four earlier runs, failed. The agent was right again: the bill had the correct due date. The planner referenced `$source.due_date` in a check but left it out of `source_fields`, so the verifier never re-read it. `lintGoal()` now adds every `$source.<key>` a check uses to `source_fields`. This fix came after run 5 and has not been re-measured. I stopped iterating here: the remaining failures are run-to-run planner variance on cases that have already shaped five rounds of fixes, and more rounds would overfit them.

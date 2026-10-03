@@ -78,6 +78,13 @@ describe("criteria lint", () => {
     }] });
     expect(g.success_criteria[0]!.where!.map((w) => w.op)).toEqual(["~", "=", "=", "="]);
   });
+  it("adds every $source value a check uses to the values the verifier must re-read", () => {
+    const g = lintGoal({ intent: "", entities: [], open_questions: [], plan: [], source_fields: [{ key: "amount", description: "total" }], success_criteria: [{
+      id: "C1", check: "", source: "", kind: "record", where: [{ field: "invoice_no", op: "=", value: "$source.invoice_no" }],
+      expect_fields: [{ field: "amount", value: "$source.amount" }, { field: "due_date", value: "$source.due_date" }],
+    }] });
+    expect(g.source_fields.map((f) => f.key)).toEqual(["amount", "invoice_no", "due_date"]);
+  });
   it("an answer check with no answer key but record expectations becomes a record check", () => {
     const base = { id: "C2", check: "", source: "", where: [] };
     const g = lintGoal({ intent: "", entities: [], source_fields: [], open_questions: [], plan: [], success_criteria: [

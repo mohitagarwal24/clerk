@@ -2,7 +2,7 @@ import { useState } from "react";
 import type { Criterion, CriterionResult } from "@clerk/shared";
 import type { RunView } from "./api.js";
 import { buildFeed, currentActivity } from "./feed.js";
-import { Icon, useTech } from "./ui.js";
+import { Icon, plainCheck, useTech } from "./ui.js";
 
 /** What Clerk did, in plain language. Technical mode adds the raw tool call under each line. */
 export function Feed({ v, live }: { v: RunView; live: boolean }) {
@@ -44,20 +44,21 @@ export function Feed({ v, live }: { v: RunView; live: boolean }) {
 }
 
 /** "Done means": the checks Clerk committed to before acting, ticked once the verifier has run. */
-export function Checks({ criteria, results, open }: { criteria: Criterion[]; results?: CriterionResult[]; open?: boolean }) {
+/** `stopped`: the run stopped on purpose, so the goal's checks were not expected to pass; show them neutrally. */
+export function Checks({ criteria, results, open, stopped }: { criteria: Criterion[]; results?: CriterionResult[]; open?: boolean; stopped?: boolean }) {
   const { tech } = useTech();
   return (
     <ul className="checks">
       {criteria.map((c) => {
         const r = results?.find((x) => x.id === c.id);
-        const mark = <span className={`mark ${r ? (r.pass ? "pass" : "fail") : ""}`}>{r ? (r.pass ? Icon.check() : Icon.cross()) : null}</span>;
-        if (!r) return <li key={c.id}>{mark}<span>{c.check}{tech && <span className="sub mono">{c.id} · {c.kind} · {c.source}</span>}</span></li>;
+        const mark = <span className={`mark ${r && !(stopped && !r.pass) ? (r.pass ? "pass" : "fail") : ""}`}>{r && !(stopped && !r.pass) ? (r.pass ? Icon.check() : Icon.cross()) : null}</span>;
+        if (!r) return <li key={c.id}>{mark}<span>{plainCheck(c.check)}{tech && <span className="sub mono">{c.id} · {c.kind} · {c.source}</span>}</span></li>;
         return (
           <li key={c.id}>{mark}
-            <details open={open ?? (tech || !r.pass)}>
-              <summary>{c.check}</summary>
+            <details open={open ?? (tech || (!r.pass && !stopped))}>
+              <summary>{plainCheck(c.check)}</summary>
               <div className="vs">
-                <span>Expected</span><b>{r.expected}</b>
+                <span>Expected</span><b>{plainCheck(r.expected)}</b>
                 <span>Found in ERP</span><b>{r.found}</b>
                 {tech && <><span>How checked</span><b>{r.how}</b></>}
                 {r.note && <><span>Note</span><b>{r.note}</b></>}

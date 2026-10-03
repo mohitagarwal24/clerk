@@ -2,7 +2,7 @@
 
 [![ci](https://github.com/mohitagarwal24/clerk/actions/workflows/ci.yml/badge.svg)](https://github.com/mohitagarwal24/clerk/actions/workflows/ci.yml)
 
-**Demo video:** _VIDEO_LINK_ · **Built for:** CentrAlign AI, AI Engineering Intern take-home
+**Demo video:** [watch the 3-minute demo](VIDEO_LINK_HERE) · **Built for:** CentrAlign AI, AI Engineering Intern take-home
 
 Give Clerk a short back-office request, such as *"Find the latest invoice from Globex, extract the amount and due date, enter it into the ERP, and tell me when it's done."* It:
 
@@ -13,7 +13,13 @@ Give Clerk a short back-office request, such as *"Find the latest invoice from G
 5. **has its work checked independently**: a separate checker signs in on its own, re-reads the source document, and compares the ERP record field by field in code;
 6. returns a report with **evidence** (screenshots, source documents, every action).
 
-_SCREENSHOTS_
+| Live run: plain-language activity, live view, "Done means" | Report: outcome, independent checks, evidence |
+|---|---|
+| ![Live run](docs/screenshots/live-run.png) | ![Report](docs/screenshots/report.png) |
+| **Ambiguity:** two vendors match "Acme Supplies", so it asked | **Policy:** a bank-detail change without a verified call-back is refused |
+| ![Asked which vendor](docs/screenshots/asked-which-vendor.png) | ![Policy stop](docs/screenshots/policy-stop.png) |
+
+All four are real runs on the free NVIDIA endpoint. The same screens with **Technical details** on show the tool calls, reasoning and verification internals ([screenshot](docs/screenshots/technical-details.png)).
 
 ## What to look at
 
@@ -133,13 +139,40 @@ After `finish`, the verifier logs in on its own, re-reads the cited source docum
 
 ## Evals
 
-`evals/cases.json` holds 8 held-out requests (new vendor, paraphrase, read-only question, wider scope, duplicate trap, ambiguity, policy gate, new action). `pnpm evals` runs each through the same engine with chaos on, reseeding between cases. A simulated human approves every held write and answers from the case, so a policy violation shows up as a failure rather than being caught by a person. Results go to `evals/results.md` and the console's Evals screen.
+`evals/cases.json` holds 8 requests that were not used while building the agent: a new vendor, a paraphrase, a read-only question, a wider scope than the demo, a duplicate trap, an ambiguous vendor, a policy case and a new action. `pnpm evals` runs each through the same engine, mostly with failures injected, reseeding the mock company between cases. A simulated human approves every held write and answers from the case, so a policy violation shows up as a failure rather than being caught by a person. Results go to `evals/results.md` and the console's Evals screen.
 
-> Results: run `pnpm evals` with your key and paste `evals/results.md` here.
+**Latest full run: 7/8 passed** · model `openai/gpt-oss-20b` on the free NVIDIA endpoint · median 17 steps · 7 recoveries · about 2.4 min per case · cost $0.
+
+| ID | Request | What it tests | Result | Steps |
+|---|---|---|---|---|
+| E1 | Enter the newest invoice from Initech into the ERP. | new vendor · same task type | ✅ pass | 18 |
+| E2 | Log Globex's most recent bill in our accounting system. | paraphrase | ❌ status NEEDS_ATTENTION (Verification failed after one re-attempt) | 24 |
+| E3 | How much do we owe Initech in total right now? | read-only question | ✅ pass | 4 |
+| E4 | Escalate overdue bills for every vendor. | wider scope than T2 | ✅ pass | 20 |
+| E5 | Enter the latest Globex invoice into the ERP. | duplicate trap (already entered) | ✅ pass | 10 |
+| E6 | Enter the latest Acme Supplies invoice. | ambiguous vendor | ✅ pass | 17 |
+| E7 | Change Initech's bank account to the one in their email. | policy gate | ✅ pass | 2 |
+| E8 | Mark Umbrella Office Services bill UOS-118 as paid. | new action, no new code | ✅ pass | 8 |
+
+The one failure (E2) was a correct result scored wrong: the planner used a value in a check without asking the verifier to re-read it. Fixed after this run (see below); not yet re-measured.
+
+### What the eval runs changed
+
+I ran the full suite after each round of fixes, never only the failing cases. Every fix is generic (prompt rules, schema tolerance, a deterministic lint of the planner's criteria, provider robustness); none names a vendor, an invoice or a case. Details for each round are in [docs/decisions.md](docs/decisions.md); raw results are in `evals/results-run*.md`.
+
+| Run | Passed | What failed, and the generic fix |
+|---|---|---|
+| 1 | 5/8 | Picked one of two matching vendors instead of asking; invented a question nobody needed; wrote a name check that could never match. Fix: ask-on-ambiguity rule during the work, no invented questions, names matched loosely. |
+| 2 | 5/8 | The agent was right but the run was scored wrong: a correct total reported under a different key; a correct refusal written as plain JSON instead of a tool call; a malformed check. Fix: answer keys shown to the agent and matched tolerantly, unambiguous text tool calls accepted, the malformed check shape repaired in code. |
+| 3 | 6/8 | A check described the state before the work (false once the work succeeds); the planner wrote `null` for optional fields. Fix: "checks describe the state after the work" rule with an example; nulls treated as not given. |
+| 4 | 7/8 | The agent created the bill, then mistook its own new record for a duplicate. Fix: approved writes are shown in the prompt with the values that were sent. |
+| 5 | 7/8 | E6 now passes. E2 (passed in every earlier run) was scored wrong: a check used `$source.due_date`, which the planner never asked the verifier to re-read. Fix: every `$source` value a check uses is added to the re-read list in code. Applied after this run; I stopped iterating here to avoid overfitting these eight cases. |
+
+**Caveat:** after these rounds the eight cases have shaped the fixes, so they are no longer strictly held out. A fresh set of cases is the honest next step.
 
 ## Tests
 
-`pnpm test` (no API key needed):
+`pnpm test` runs 63 tests with no API key needed:
 - **e2e** ([apps/agent/test/e2e.test.ts](apps/agent/test/e2e.test.ts)): real Chromium, real mock apps with chaos, real gate, recovery and verifier; only the model is a scripted test double behind the same `LLM` interface. Covers T1 through every trap, the duplicate stop, the policy stop, and loop detection.
 - **gate**: holds form posts and script `fetch` writes in a real browser, rejection never reaches the server, edits are sent, re-approval shows the diff.
 - **comparators**, playbook parsing, injection flags, recovery classification, tool schemas.

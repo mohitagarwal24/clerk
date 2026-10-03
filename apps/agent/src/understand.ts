@@ -47,12 +47,16 @@ export async function pickSkills(llm: LLM, meter: Meter, request: string, skills
 /**
  * Deterministic clean-up of model-written criteria, for mistakes that would fail a correct result:
  * - a literal name compared with "=" can never match "Initech LLC" for "Initech": make it "~";
- * - an "answer" check with no answer_key but record expectations is really a "record" check.
+ * - an "answer" check with no answer_key but record expectations is really a "record" check;
+ * - every "$source.<key>" a check uses must be in source_fields, or the verifier never re-reads it.
  */
 export function lintGoal(goal: GoalSpec): GoalSpec {
   const loose = new Set(["vendor_name", "name"]);
+  const used = new Set(JSON.stringify(goal.success_criteria).match(/\$source\.(\w+)/g)?.map((m) => m.slice(8)) ?? []);
+  const missing = [...used].filter((k) => !goal.source_fields.some((f) => f.key === k));
   return {
     ...goal,
+    source_fields: [...goal.source_fields, ...missing.map((key) => ({ key, description: key.replace(/_/g, " ") }))],
     success_criteria: goal.success_criteria.map((c) => ({
       ...c,
       kind: c.kind === "answer" && !c.answer_key && (c.expect_fields?.length || c.expect_count) ? "record" as const : c.kind,
