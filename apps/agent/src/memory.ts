@@ -16,7 +16,7 @@ export function newRunId(dir = RUNS_DIR): string {
 export function newState(id: string, request: string, chaos: ChaosPreset, maxSteps: number): RunState {
   return {
     id, request, chaos, status: "UNDERSTANDING", step: 0, maxSteps, planRevision: 0, planDone: 0,
-    skillsLoaded: [], facts: {}, recent: [], downloads: [], approvals: [], questions: [], recoveries: [],
+    skillsLoaded: [], facts: {}, recent: [], downloads: [], documents: [], approvals: [], questions: [], recoveries: [],
     injectionFlags: [], usage: { calls: 0, inputTokens: 0, outputTokens: 0, costUsd: 0 },
     startedAt: new Date().toISOString(),
   };

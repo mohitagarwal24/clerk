@@ -172,6 +172,8 @@ export const RunState = z.object({
   facts: z.record(z.string(), z.string()),
   recent: z.array(z.string()).describe("Last action summaries fed back into the prompt"),
   downloads: z.array(z.object({ url: z.string(), path: z.string(), name: z.string() })),
+  /** Text of documents the agent has read; shown in every step prompt so nothing depends on the model remembering it. */
+  documents: z.array(z.object({ name: z.string(), text: z.string(), flagged: z.boolean() })),
   approvals: z.array(ApprovalRecord),
   questions: z.array(QuestionRecord),
   recoveries: z.array(Recovery),

@@ -38,8 +38,9 @@ export function invoiceEntryPolicy() {
     if (path === "/portal/invoices/INV-1042") {
       if (p.last.includes("downloaded INV-1042.pdf")) return call("read_pdf", { file: "INV-1042.pdf", plan_step: 3 });
       if (p.last.includes("read INV-1042.pdf")) {
-        const amount = p.last.match(/Total payable \(INR\) ([\d,.]+)/)![1]!.replace(/,/g, "");
-        const due = p.last.match(/Payment Due (\S+)/)![1]!;
+        const docs = p.section("Documents you have read");
+        const amount = docs.match(/Total payable \(INR\) ([\d,.]+)/)![1]!.replace(/,/g, "");
+        const due = docs.match(/Payment Due (\S+)/)![1]!;
         return call("remember", { key: "invoice", value: `INV-1042 amount=${amount} due=${due}` });
       }
       if (p.memory.includes("INV-1042 amount")) return call("open_url", { url: "/erp/bills?q=INV-1042", plan_step: 4 });

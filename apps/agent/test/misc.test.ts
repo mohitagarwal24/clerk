@@ -45,6 +45,12 @@ describe("recovery", () => {
     expect(g.see("click", { ref: "e2" })).toBe(2);
     expect(g.see("click", { ref: "e2" })).toBe(3);
   });
+  it("counts repeats inside a 10-step window, even when not consecutive", () => {
+    const g = new LoopGuard();
+    for (let i = 0; i < 4; i++) { g.see("read_pdf", { file: "a.pdf" }); g.see("open_url", { url: `/x${i}` }); }
+    expect(g.inWindow("read_pdf", { file: "a.pdf" })).toBe(4);
+    expect(g.inWindow("open_url", { url: "/x0" })).toBe(1);
+  });
   it("detects the same page error persisting", () => {
     const g = new LoopGuard();
     expect(g.seeErrors(["Invalid date"])).toBe(1);

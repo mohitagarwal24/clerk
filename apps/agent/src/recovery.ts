@@ -6,8 +6,9 @@
 //   plan mismatch                           -> model calls `replan`                 (replan call)
 //   ambiguity                               -> model calls `ask_user`               (playbook rule)
 //   duplicate / policy conflict             -> model calls finish(blocked)          (playbook rule)
-//   loop (same action 3x, or the same page
-//         error after 6 actions in a row)   -> stop, NEEDS_ATTENTION                (LoopGuard)
+//   loop: same action 3x in a row, or 5x in
+//         the last 10 steps (warned at 3x), or
+//         the same page error 6 actions running -> stop, NEEDS_ATTENTION           (LoopGuard)
 //   malformed model output                  -> one re-prompt, then stop             (llm.ts decide/structured)
 //   budget exhausted                        -> stop at step cap, NEEDS_ATTENTION    (loop.ts)
 import type { BrowserSession } from "./browser.js";
@@ -55,6 +56,10 @@ export async function retryTransient(session: BrowserSession, max = 3, baseMs = 
 export class LoopGuard {
   static readonly SAME_ACTION = 3;
   static readonly SAME_ERROR = 6;
+  static readonly WINDOW = 10;
+  static readonly WINDOW_WARN = 3;
+  static readonly WINDOW_STOP = 5;
+  private history: string[] = [];
   private last = "";
   private count = 0;
   private lastError = "";
@@ -65,7 +70,14 @@ export class LoopGuard {
     const key = `${name}:${JSON.stringify(args)}`;
     this.count = key === this.last ? this.count + 1 : 1;
     this.last = key;
+    this.history.push(key);
     return this.count;
+  }
+
+  /** How many of the last WINDOW actions (including the one just seen) were exactly this one. */
+  inWindow(name: string, args: Record<string, unknown>): number {
+    const key = `${name}:${JSON.stringify(args)}`;
+    return this.history.slice(-LoopGuard.WINDOW).filter((k) => k === key).length;
   }
 
   /**
