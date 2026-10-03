@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 import { z } from "zod";
+import { config } from "../src/config.js";
 import { decide, structured } from "../src/llm.js";
 import { openaiLLM, parseLooseJson } from "../src/providers/openai.js";
 
@@ -89,6 +90,20 @@ describe("OpenAI-compatible provider", () => {
   it("client errors other than tool_choice are not retried", async () => {
     handler = () => new Response('{"error":"invalid api key"}', { status: 401 });
     await expect(llm("m6").callTool({ system: "s", prompt: "p", tools, purpose: "t" })).rejects.toThrow(/HTTP 401/);
+  });
+
+  it("falls back to the next model when one is retired (410), and stays on it", async () => {
+    seen.length = 0;
+    config.llmFallbackModels.splice(0, Infinity, "m-backup");
+    handler = (b) => (b.model === "m-gone"
+      ? new Response('{"status":410,"detail":"The model has reached its end of life"}', { status: 410 })
+      : toolReply("click", { ref: "e3", why: "x" }));
+    const p = llm("m-gone");
+    const out = await p.callTool({ system: "s", prompt: "p", tools, purpose: "t" });
+    expect(out).toMatchObject({ name: "click", usage: { model: "m-backup" } });
+    await p.callTool({ system: "s", prompt: "p", tools, purpose: "t" });
+    expect(seen.map((b) => b.model)).toEqual(["m-gone", "m-backup", "m-backup"]);
+    config.llmFallbackModels.splice(0, Infinity);
   });
 
   it("parses JSON wrapped in prose or fences", () => {

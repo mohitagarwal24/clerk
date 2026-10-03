@@ -11,7 +11,7 @@ pnpm i
 pnpm exec playwright install chromium
 cp .env.example .env          # paste a free NVIDIA key (build.nvidia.com) into LLM_API_KEY
 pnpm spike:llm --list         # models your key can use; then grade a few:
-pnpm spike:llm openai/gpt-oss-120b <another-model>   # pin the best one as LLM_MODEL
+pnpm spike:llm openai/gpt-oss-20b <another-model>    # pin the best one as LLM_MODEL
 pnpm reset                    # seed the mock company database and invoice PDFs
 pnpm demo                     # mock apps :4000 · agent API :4100 · console http://localhost:5173
 ```

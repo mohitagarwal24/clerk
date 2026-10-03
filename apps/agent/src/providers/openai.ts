@@ -6,6 +6,8 @@
 //   Anything that supports tool calling supports this.
 // - tool_choice falls back when a server rejects it: named/"required" -> "auto". With "auto" a
 //   model may answer in text; we then parse JSON out of the text, else llm.ts re-prompts once.
+// - Models fall back too: when the endpoint says a model is gone (404/410) or it stops responding,
+//   the next one in LLM_FALLBACK_MODELS is used for the rest of the process.
 import { config } from "../config.js";
 import { clip } from "../telemetry.js";
 import { MalformedOutputError, toJsonSchema, type LLM, type LLMUsage, type ToolDecl } from "./common.js";
@@ -37,6 +39,15 @@ async function pace(rpm: number) {
 /** Servers that rejected "required" or a named tool_choice; remembered for the process. */
 const noForcedChoice = new Set<string>();
 
+/** Models this process stopped using, and why. */
+export const retiredModels = new Map<string, string>();
+
+class UnresponsiveError extends Error {}
+
+/** A model the endpoint no longer serves (retired, or not available to this account). */
+export const isModelGone = (e: unknown) =>
+  e instanceof ProviderError && (e.status === 404 || e.status === 410 || /end of life|model .*(not found|does not exist)/i.test(e.message));
+
 export function parseLooseJson(text: string): unknown {
   const t = text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim();
   try { return JSON.parse(t); } catch { /* try the outermost object */ }
@@ -66,10 +77,10 @@ export function openaiLLM(opts: { model?: string; baseUrl?: string; apiKey?: str
           method: "POST",
           headers: { "content-type": "application/json", accept: "application/json", ...(apiKey ? { authorization: `Bearer ${apiKey}` } : {}) },
           body: JSON.stringify(body),
-          signal: AbortSignal.timeout(180_000),
+          signal: AbortSignal.timeout(config.llmTimeoutMs),
         });
       } catch (e) {
-        if (attempt >= 4) throw e;
+        if (attempt >= 1) throw new UnresponsiveError(`no response from ${String(body.model)}: ${(e as Error).message}`);
         await sleep(Math.min(30_000, 2000 * 2 ** attempt));
         continue;
       }
@@ -82,6 +93,24 @@ export function openaiLLM(opts: { model?: string; baseUrl?: string; apiKey?: str
       if (!res.ok) throw new ProviderError(res.status, text);
       try { return JSON.parse(text) as ChatResponse; } catch { throw new ProviderError(res.status, `non-JSON body: ${text}`); }
     }
+  }
+
+  /** Try the requested model, then each fallback, skipping models already found gone. */
+  async function withFallback(m: string, send: (model: string) => Promise<ChatResponse>): Promise<{ r: ChatResponse; used: string }> {
+    const chain = [m, ...config.llmFallbackModels.filter((x) => x !== m)];
+    let last: unknown;
+    for (const candidate of chain) {
+      if (retiredModels.has(candidate)) continue;
+      try {
+        return { r: await send(candidate), used: candidate };
+      } catch (e) {
+        if (!isModelGone(e) && !(e instanceof UnresponsiveError)) throw e;
+        retiredModels.set(candidate, (e as Error).message);
+        console.error(`[clerk] model ${candidate} unavailable (${clip((e as Error).message, 160)}); trying the next fallback`);
+        last = e;
+      }
+    }
+    throw last ?? new Error(`No usable model: ${chain.join(", ")} are all unavailable. Set LLM_MODEL / LLM_FALLBACK_MODELS.`);
   }
 
   /** Send with the strongest tool_choice the server accepts. */
@@ -115,18 +144,18 @@ export function openaiLLM(opts: { model?: string; baseUrl?: string; apiKey?: str
 
   return {
     async callTool(req) {
-      const r = await withTools(model, req.system, req.prompt, req.tools, "required");
+      const { r, used } = await withFallback(model, (m) => withTools(m, req.system, req.prompt, req.tools, "required"));
       const call = firstCall(r);
       if (!call) throw new MalformedOutputError(`Model returned no tool call: ${clip(r.choices?.[0]?.message?.content ?? "", 300)}`);
-      return { ...call, usage: usageOf(model, r) };
+      return { ...call, usage: usageOf(used, r) };
     },
     async json(req) {
       const m = req.model ?? model;
       const submit = { name: "submit", description: "Submit your answer. The arguments are the answer.", schema: req.schema } as ToolDecl;
-      const r = await withTools(m, req.system, `${req.prompt}\n\nCall the submit tool with your answer.`, [submit], { type: "function", function: { name: "submit" } });
+      const { r, used } = await withFallback(m, (x) => withTools(x, req.system, `${req.prompt}\n\nCall the submit tool with your answer.`, [submit], { type: "function", function: { name: "submit" } }));
       const call = firstCall(r);
       const value = call ? call.args : parseLooseJson(r.choices?.[0]?.message?.content ?? "");
-      return { value, usage: usageOf(m, r) };
+      return { value, usage: usageOf(used, r) };
     },
   };
 }

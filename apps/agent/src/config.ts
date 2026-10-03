@@ -23,6 +23,9 @@ export const config = {
   /** OpenAI-compatible endpoint settings. */
   llmBaseUrl: (process.env.LLM_BASE_URL ?? "https://integrate.api.nvidia.com/v1").replace(/\/$/, ""),
   llmRpm: Number(process.env.LLM_RPM ?? 35),
+  /** Tried in order when a model is retired (404/410) or stops responding. Free endpoints retire models without warning. */
+  llmFallbackModels: (process.env.LLM_FALLBACK_MODELS ?? "").split(",").map((s) => s.trim()).filter(Boolean),
+  llmTimeoutMs: Number(process.env.LLM_TIMEOUT_MS ?? 90_000),
   llmMaxTokens: Number(process.env.LLM_MAX_TOKENS ?? 4096),
   maxSteps: Number(process.env.CLERK_MAX_STEPS ?? 40),
   apiPort: Number(process.env.AGENT_PORT ?? 4100),

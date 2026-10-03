@@ -51,3 +51,9 @@ Deviations from PRD.md and findings that changed the plan. Newest last.
 - Approval sheet shows human labels and the vendor's name ("Globex Corporation (Mumbai)") instead of `vendor_id: V-001`, via `GET /api/lookup/vendors` (server-side ERP read; credentials stay on the server). Re-approvals name the fields that changed. Reject asks for a reason inline instead of a browser prompt.
 - Playbook skills gained an optional `rule:` line written for people; the model still uses `description`.
 - Plan progress never marks the last step done while the run is still going (the model sometimes reports a final plan step early).
+
+## 2026-10-03 — Model retired mid-project; automatic model fallback
+- NVIDIA retired `nvidia/nemotron-3-super-120b-a12b` on 2026-10-03 09:00 UTC (HTTP 410 "end of life"), and Kimi K3 was timing out under load the same morning. Free hosted models can disappear or stall without notice, which would break a live demo.
+- The OpenAI-compatible provider now walks a fallback chain (`LLM_FALLBACK_MODELS`): on 404/410 ("model gone") or no response within `LLM_TIMEOUT_MS` (default 90 s, one retry), it moves to the next model and stays there for the process. The switch is logged to stderr (stdout stays clean for MCP) and the model actually used is recorded in usage.
+- Re-graded with `pnpm spike:llm`: agent model is now `openai/gpt-oss-20b` (2.8 s for a forced tool call; criteria included count, amount, due date and status; opened INV-1042).
+- Verifier uses the same model (`LLM_VERIFIER_MODEL` empty). Its independence comes from a fresh browser context and never seeing the agent's notes, not from a different model. Nemotron 3.5 Lightning, tried as verifier, wrote wrong criteria (matched vendor name against `$source.invoice_no`) and took 228 s, so it is only the last fallback. Fallback order: Kimi K3 (best quality when responsive), then Nemotron 3.5 Lightning.
