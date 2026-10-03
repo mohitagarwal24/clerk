@@ -85,7 +85,13 @@ export function evaluateRows(c: Criterion, rows: Row[], source: Record<string, s
 
   if (c.kind === "answer") {
     const answers = finish?.answers ?? [];
-    const given = answers.find((a) => a.key.toLowerCase() === (c.answer_key ?? "").toLowerCase()) ?? (answers.length === 1 ? answers[0] : undefined);
+    // Keys are written by two model calls (planner, agent), so match tolerantly: exact, then one
+    // contains the other ("total_owed" vs "total_owed_initech"), then the only answer given.
+    const norm = (k: string) => k.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const want = norm(c.answer_key ?? "");
+    const given = answers.find((a) => norm(a.key) === want)
+      ?? (want ? answers.find((a) => norm(a.key).includes(want) || want.includes(norm(a.key))) : undefined)
+      ?? (answers.length === 1 ? answers[0] : undefined);
     const truth = c.aggregate === "count" ? hits.length : hits.reduce((s, r) => s + (normNumber(String(r.amount ?? "0")) ?? 0), 0);
     if (!given) return { expected: fmt(truth), found: "(no answer reported)", pass: false };
     return { expected: fmt(truth), found: given.value, pass: sameValue(given.value, fmt(truth)), note: `${c.aggregate ?? "sum_amount"} over ${hits.length} row(s)` };

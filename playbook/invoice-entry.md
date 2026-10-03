@@ -6,7 +6,7 @@ applies_to: [enter invoice, log bill, record invoice, create bill, accounts paya
 ---
 # Entering a vendor invoice as an ERP bill
 
-1. **Find the vendor's invoices** in the Vendor Portal.
+1. **Find the vendor's invoices** in the Vendor Portal. If more than one vendor matches the name the user gave (for example two vendors whose names both contain it), **ask the user which one**, offering each full name as an option. Do not pick one yourself.
 2. **Pick the right invoice.** "Latest" means the most recently uploaded invoice that is still valid. **Skip invoices marked Superseded** (read the Remarks; they usually name the replacement). Skip Paid invoices.
 3. **Read the PDF.** Take the invoice number, the "Total payable" amount and the "Payment Due" date from the PDF, not from the portal page.
 4. **Duplicate check before creating anything.** Search `/erp/bills` for the invoice number. If a bill for the same vendor and invoice number already exists, **do not create another one**: stop, and finish with outcome `blocked`, naming the existing bill number.

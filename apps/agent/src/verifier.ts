@@ -130,7 +130,7 @@ async function recheckSource(d: VerifyDeps, context: BrowserContext): Promise<So
     system: VERIFIER_SYSTEM,
     prompt: `The user asked: "${d.state.request}"\n\nCompany rules that apply:\n${skillText(d.skills, d.state.skillsLoaded)}\n\n` +
       `Documents:\n${docs.join("\n\n")}\n\n` +
-      `1. Decide which document is the correct source for this request under the company rules (ok=false if none of them is, e.g. it is superseded or the wrong vendor).\n` +
+      `1. Decide which document is the correct source for this request under the company rules. ok=false only if no document is a valid source (e.g. it is superseded or from the wrong vendor). Whether a record already exists in the ERP is not your concern; ignore ERP pages here.\n` +
       `2. From that document only, extract these values exactly as printed:\n${fields.map((f) => `- ${f.key}: ${f.description}`).join("\n")}`,
     schema: z.object({
       ok: z.boolean(),

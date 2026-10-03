@@ -146,8 +146,10 @@ export function openaiLLM(opts: { model?: string; baseUrl?: string; apiKey?: str
     async callTool(req) {
       const { r, used } = await withFallback(model, (m) => withTools(m, req.system, req.prompt, req.tools, "required"));
       const call = firstCall(r);
-      if (!call) throw new MalformedOutputError(`Model returned no tool call: ${clip(r.choices?.[0]?.message?.content ?? "", 300)}`);
-      return { ...call, usage: usageOf(used, r) };
+      const content = r.choices?.[0]?.message?.content ?? "";
+      const recovered = call ?? callFromText(content, req.tools);
+      if (!recovered) throw new MalformedOutputError(`Model returned no tool call: ${clip(content, 300)}`);
+      return { ...recovered, usage: usageOf(used, r) };
     },
     async json(req) {
       const m = req.model ?? model;
@@ -158,6 +160,28 @@ export function openaiLLM(opts: { model?: string; baseUrl?: string; apiKey?: str
       return { value, usage: usageOf(used, r) };
     },
   };
+}
+
+/**
+ * Some open models write the tool call as JSON text instead of a structured tool call. Accept it
+ * only when it is unambiguous: {"name": ..., "arguments"|"parameters": {...}} naming a declared tool,
+ * or a bare arguments object whose keys fit exactly one tool's required fields. Zod still validates.
+ */
+export function callFromText(text: string, tools: ToolDecl[]): { name: string; args: Record<string, unknown> } | null {
+  let v: unknown;
+  try { v = parseLooseJson(text); } catch { return null; }
+  if (Array.isArray(v)) v = v[0];
+  if (!v || typeof v !== "object") return null;
+  const o = v as Record<string, unknown>;
+  const named = typeof o.name === "string" ? tools.find((t) => t.name === o.name) : undefined;
+  const inner = o.arguments ?? o.parameters ?? o.args;
+  if (named && inner && typeof inner === "object") return { name: named.name, args: { why: "", ...(inner as Record<string, unknown>) } };
+  const keys = Object.keys(o);
+  const fits = tools.filter((t) => {
+    const required = Object.entries(t.schema.shape).filter(([k, s]) => k !== "why" && !(s as { isOptional?: () => boolean }).isOptional?.()).map(([k]) => k);
+    return required.length > 0 && required.every((k) => keys.includes(k)) && keys.every((k) => k in t.schema.shape);
+  });
+  return fits.length === 1 ? { name: fits[0]!.name, args: { why: "", ...o } } : null;
 }
 
 /** GET /models: what the endpoint serves (used by the spike to pick a model). */

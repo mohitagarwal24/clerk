@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import { findInjections, untrusted } from "../src/injection.js";
 import { loadPlaybook, parseSkill, skillIndex } from "../src/skills.js";
 import { classify, LoopGuard } from "../src/recovery.js";
-import { toJsonSchema } from "../src/llm.js";
+import { dropNulls, toJsonSchema } from "../src/llm.js";
 import { declarations } from "../src/tools/registry.js";
 import { GoalSpec } from "@clerk/shared";
+import { lintGoal } from "../src/understand.js";
 
 describe("playbook skills", () => {
   it("parses frontmatter", () => {
@@ -57,6 +58,33 @@ describe("recovery", () => {
     expect(g.seeErrors(["Invalid date"])).toBe(2);
     expect(g.seeErrors([])).toBe(0);
     expect(g.seeErrors(["Invalid date"])).toBe(1);
+  });
+});
+
+describe("model output clean-up", () => {
+  it("treats null as not given, at any depth, so optional fields validate", () => {
+    expect(dropNulls({ a: 1, b: null, c: [{ d: null, e: "x" }] })).toEqual({ a: 1, c: [{ e: "x" }] });
+    const parsed = GoalSpec.safeParse(dropNulls({ intent: "i", entities: [], source_fields: [], open_questions: [], plan: ["p"],
+      success_criteria: [{ id: "C1", check: "c", source: "s", kind: "record", answer_key: null, aggregate: null, where: [] }] }));
+    expect(parsed.success).toBe(true);
+  });
+});
+
+describe("criteria lint", () => {
+  it("turns an exact match on a loose name into contains, and leaves $source and other fields alone", () => {
+    const g = lintGoal({ intent: "", entities: [], source_fields: [], open_questions: [], plan: [], success_criteria: [{
+      id: "C1", check: "", source: "", kind: "record",
+      where: [{ field: "vendor_name", op: "=", value: "Initech" }, { field: "invoice_no", op: "=", value: "$source.invoice_no" }, { field: "name", op: "=", value: "$source.vendor" }, { field: "status", op: "=", value: "Open" }],
+    }] });
+    expect(g.success_criteria[0]!.where!.map((w) => w.op)).toEqual(["~", "=", "=", "="]);
+  });
+  it("an answer check with no answer key but record expectations becomes a record check", () => {
+    const base = { id: "C2", check: "", source: "", where: [] };
+    const g = lintGoal({ intent: "", entities: [], source_fields: [], open_questions: [], plan: [], success_criteria: [
+      { ...base, kind: "answer", aggregate: "count", expect_fields: [{ field: "amount", value: "$source.amount" }] },
+      { ...base, kind: "answer", answer_key: "total", aggregate: "sum_amount" },
+    ] });
+    expect(g.success_criteria.map((c) => c.kind)).toEqual(["record", "answer"]);
   });
 });
 

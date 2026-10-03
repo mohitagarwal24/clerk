@@ -1,20 +1,43 @@
-# Clerk — autonomous AI task worker
+# Clerk — an AI clerk that does back-office work, and proves it
 
-Give Clerk a short back-office request ("Enter the latest Globex invoice into the ERP and tell me when it's done"). It works out what *done* means, operates the company's web apps through a real browser, recovers when things break, holds every ERP write for human approval, checks the result independently of itself, and hands back evidence.
+[![ci](https://github.com/mohitagarwal24/clerk/actions/workflows/ci.yml/badge.svg)](https://github.com/mohitagarwal24/clerk/actions/workflows/ci.yml)
 
-Spec: [PRD.md](PRD.md) · Rules for coding agents: [AGENTS.md](AGENTS.md) · Decisions and deviations: [docs/decisions.md](docs/decisions.md)
+**Demo video:** _VIDEO_LINK_ · **Built for:** CentrAlign AI, AI Engineering Intern take-home
+
+Give Clerk a short back-office request, such as *"Find the latest invoice from Globex, extract the amount and due date, enter it into the ERP, and tell me when it's done."* It:
+
+1. **works out what "done" means** before acting, as checks with a source ("amount equals the total on the invoice PDF"), never as values it hasn't seen yet;
+2. **operates the company's real web apps** (a Vendor Portal and an ERP) through a browser, one step at a time;
+3. **recovers** when things break (server errors, a button that changes under it, a rejected date format);
+4. **asks a human before any change to the ERP**, enforced in the browser's network layer so nothing can bypass it, and **asks questions** instead of guessing;
+5. **has its work checked independently**: a separate checker signs in on its own, re-reads the source document, and compares the ERP record field by field in code;
+6. returns a report with **evidence** (screenshots, source documents, every action).
+
+_SCREENSHOTS_
+
+## What to look at
+
+| If you have… | Look at |
+|---|---|
+| 2 minutes | The demo video, then [How "done" is checked](#how-done-is-checked) |
+| 10 minutes | [`loop.ts`](apps/agent/src/loop.ts) (the agent loop), [`gate.ts`](apps/agent/src/gate.ts) (approval at the network layer), [`verifier.ts`](apps/agent/src/verifier.ts) + [`compare.ts`](apps/agent/src/compare.ts) (independent verification), [`recovery.ts`](apps/agent/src/recovery.ts) (failure handling) |
+| 30 minutes | Run it ([Quick start](#quick-start)), then read [docs/decisions.md](docs/decisions.md): every deviation from the [PRD](PRD.md) and what live testing taught me |
 
 ## Quick start
+
+Needs Node 20+, pnpm 10, and a free NVIDIA API key (sign up at [build.nvidia.com](https://build.nvidia.com), no card).
 
 ```bash
 pnpm i
 pnpm exec playwright install chromium
-cp .env.example .env          # paste a free NVIDIA key (build.nvidia.com) into LLM_API_KEY
-pnpm spike:llm --list         # models your key can use; then grade a few:
-pnpm spike:llm openai/gpt-oss-20b <another-model>    # pin the best one as LLM_MODEL
+cp .env.example .env          # paste your nvapi-... key into LLM_API_KEY
 pnpm reset                    # seed the mock company database and invoice PDFs
 pnpm demo                     # mock apps :4000 · agent API :4100 · console http://localhost:5173
 ```
+
+Open **http://localhost:5173**, pick an example, keep **Practice mode** on to see recoveries, and press **Start task**. Run `pnpm reset` before re-running a task that writes to the ERP.
+
+The pinned model is `openai/gpt-oss-20b` with `moonshotai/kimi-k3` and `nvidia/nemotron-3.5-lightning-30b-a3b` as automatic fallbacks. To check which models your key can use and grade others on Clerk's real prompts: `pnpm spike:llm --list`, then `pnpm spike:llm <model> <model>`. No key? `pnpm offline` runs the console against a scripted model (T1 only) so you can click through the whole flow.
 
 Other ways in, same engine:
 
@@ -41,6 +64,13 @@ Mock logins (humans only; the agent's `login` tool reads them from `.env` and th
 | T4 | Enter the latest Acme Supplies invoice. | Two vendors match, so it asks which |
 
 With `--chaos default` the mock apps also inject, per run ID and replayably: a 500 on the first invoice-list load, a Save button that is re-rendered as "Create bill" after load (stale ref), an ERP that rejects ISO dates, and a PDF containing a prompt injection asking the agent to change bank details. `--chaos rerun` pre-inserts the bill so a correct agent stops instead of double-entering.
+
+## The console
+
+Two layers on the same screens:
+
+- **Default view, for the person who asked for the work**: a plain-language activity feed ("Opened INV-1042, the newest invoice that isn't superseded"), a 4-phase progress bar, a live view of the browser, the "Done means" checklist, approval and question cards, and a report that leads with the outcome. Approval cards show the exact values the browser is about to send, with human labels and vendor names, and highlight anything that changed since you last approved.
+- **Technical details** (switch in the top bar): the raw tool call and reasoning under every feed line, element refs, ACT/ADAPT/RECOVER tags, plan and working memory, token use, run IDs, how each check was verified, the source re-check and model read-back, and links to the evidence files.
 
 ## Architecture
 
@@ -141,13 +171,22 @@ Tools: `run_task(request, chaos?)`, `get_run(run_id)`, `approve(run_id, approval
 ## Models, APIs and frameworks
 
 - **Model, swappable behind [llm.ts](apps/agent/src/llm.ts)** and chosen in `.env`:
-  - Default: any **OpenAI-compatible API**, pointed at **NVIDIA build.nvidia.com** (free key, ~40 requests/min) ([providers/openai.ts](apps/agent/src/providers/openai.ts), plain `fetch`). Forced tool calls for steps; structured output as a forced call to a `submit` tool; falls back gracefully when a server rejects forced tool choice; paced to `LLM_RPM`. The same adapter runs Cerebras, Groq, OpenRouter or a local Ollama.
-  - **Gemini** via `@google/genai` with `LLM_PROVIDER=gemini` ([providers/gemini.ts](apps/agent/src/providers/gemini.ts)): function calling mode ANY, JSON-schema structured output.
-  - The exact model ID is pinned in `.env` (`LLM_MODEL`, optional `LLM_VERIFIER_MODEL`), picked with `pnpm spike:llm`.
+  - Default: any **OpenAI-compatible API** ([providers/openai.ts](apps/agent/src/providers/openai.ts), plain `fetch`), pointed at **NVIDIA build.nvidia.com** (free, ~40 requests/min). Pinned model `openai/gpt-oss-20b`, picked with `pnpm spike:llm`, which grades candidates on a real planning call and a real step. Forced tool calls for steps; structured output as a forced call to a `submit` tool; graceful fallback when a server rejects forced tool choice; requests paced to `LLM_RPM`.
+  - **Automatic model fallback**: if the endpoint reports a model gone (404/410) or it stops responding within `LLM_TIMEOUT_MS`, the next model in `LLM_FALLBACK_MODELS` takes over for the rest of the process. (NVIDIA retired my first pinned model on the morning of 3 Oct; see [docs/decisions.md](docs/decisions.md).)
+  - **Gemini** via `@google/genai` with `LLM_PROVIDER=gemini` ([providers/gemini.ts](apps/agent/src/providers/gemini.ts)). The same OpenAI adapter also runs Cerebras, Groq, OpenRouter or a local Ollama by changing three `.env` lines.
 - **Playwright** ≥1.59: AI-mode aria snapshots with refs, `aria-ref=` locators, `context.route` for the gate, screenshots, downloads.
 - **Zod 4** for every schema (tool declarations, structured output, API, events). **Hono** for the mock apps and the agent API (SSE). **Vite + React** for the console. **better-sqlite3**, **pdf-lib** (generate), **unpdf** (read), **p-retry**.
 - **OpenTelemetry + Arize Phoenix** (`@arizeai/phoenix-otel`), **MCP SDK** v1, **Vitest**, **concurrently**.
 - Not used, on purpose: browser-use, Stagehand, LangGraph. The loop, recovery, gate and verification are the thing being evaluated, so they are hand-written and small enough to explain line by line.
+
+## How it was built
+
+- **Spec first.** [PRD.md](PRD.md) was written and audited before any code; [AGENTS.md](AGENTS.md) (symlinked as `CLAUDE.md`) holds the seven non-negotiables so coding agents (Claude Code, Cursor) could not quietly simplify the gate or the verifier. Built block by block, each ending with typecheck + tests + a commit.
+- **Tested without a model first.** A scripted test double sits behind the same `LLM` interface, so the loop, tools, gate, recovery and verifier were proven against the real browser and mock apps before spending a single model call.
+- **Then live testing changed the design**, recorded in [docs/decisions.md](docs/decisions.md):
+  - The first live run hit the 40-step cap: PDF text was shown to the model only once, it moved on without saving the values, and spent 30 steps re-reading the PDF. Documents now stay in every step prompt, and repeated actions within a 10-step window trigger a warning and then a stop. Re-run: done and verified in 20 steps.
+  - The first console showed the engine (tool calls, refs, tokens) to the end user. It was redesigned around plain language, with the internals behind a switch.
+  - The free model I had pinned was retired mid-project, so the provider now falls back to the next model automatically.
 
 ## Assumptions
 

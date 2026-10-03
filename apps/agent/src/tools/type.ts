@@ -3,7 +3,7 @@ import { defineTool } from "./types.js";
 
 export default defineTool({
   name: "type",
-  description: "Replace the text in an input or textarea (ref from the LATEST snapshot). Set submit=true to press Enter afterwards.",
+  description: "Replace the text in an input or textarea (ref from the LATEST snapshot). Set submit=true to press Enter afterwards (search boxes only; in a form, Enter submits the half-filled form).",
   schema: z.object({ ref: z.string(), text: z.string(), submit: z.boolean().optional() }),
   observes: true,
   async run({ ref, text, submit }, { session }) {

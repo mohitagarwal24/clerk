@@ -27,6 +27,9 @@ Rules:
 - If you see a "Sign in" form, call login. Never type credentials.
 - Company rules in the loaded skills override your own judgement. If you need a skill that is not loaded, call read_skill.
 - If the request is ambiguous and the skills do not resolve it, call ask_user with options. Do not guess.
+- When you pick a record the user named (a vendor, an invoice, a bill) and more than one plausibly matches (e.g. two vendors whose names both contain what the user wrote), stop and call ask_user with each candidate's full name as an option, unless a company rule says which one to pick. Do not pick one yourself.
+- In forms, fill every field first, then click the form's own submit button. Use type(submit=true) only for search boxes.
+- Writes listed under "ERP write approvals" as approved and sent are your own work in this run. A record matching one of them is the result of that work, not a duplicate.
 - Every write to the ERP is held for human approval automatically. You do not need to ask separately.
 - If an action fails, read the error and the new snapshot, then change something. Do not repeat a failing action unchanged.
 - Call finish(outcome=completed) only when the result is visible in the system. Call finish(outcome=blocked) when you must stop (duplicate, policy, the user said stop).`;
@@ -53,12 +56,13 @@ export function stepPrompt(state: RunState, skills: Skill[], obs: Observation, l
   const plan = goal.plan.map((p, i) => `${i + 1}. ${i < state.planDone ? "[done] " : ""}${p}`).join("\n");
   const approvals = state.approvals.slice(-3).map((a) => {
     const d = a.decision;
-    const verdict = !d ? "waiting" : d.approve ? `approved${d.fields ? ` with values edited by the human (${Object.keys(d.fields).join(", ")})` : ""}` : `REJECTED${d.note ? `: ${d.note}` : ""}`;
+    const sent = d?.approve ? ` and sent by you: ${(a.sent ?? a.fields).filter((f) => f.value).map((f) => `${f.name}=${f.value}`).join(", ")}` : "";
+    const verdict = !d ? "waiting" : d.approve ? `approved${d.fields ? ` with values edited by the human (${Object.keys(d.fields).join(", ")})` : ""}${sent}` : `REJECTED${d.note ? `: ${d.note}` : ""}`;
     return `- step ${a.step}: ${a.method} ${a.path} ${verdict}`;
   });
   return [
     `# Request\n${state.request}`,
-    `# Goal\n${goal.intent}\nSuccess criteria (the verifier will check these independently):\n${goal.success_criteria.map((c) => `- ${c.id}: ${c.check} [source: ${c.source}]`).join("\n")}`,
+    `# Goal\n${goal.intent}\nSuccess criteria (the verifier will check these independently):\n${goal.success_criteria.map((c) => `- ${c.id}: ${c.check} [source: ${c.source}]${c.kind === "answer" && c.answer_key ? ` (report it in finish.answers with key "${c.answer_key}")` : ""}`).join("\n")}`,
     goal.open_questions.length ? `Open questions from planning: ${goal.open_questions.join(" | ")}` : "",
     `# Plan (revision ${state.planRevision})\n${plan}`,
     `# Company playbook\nIndex:\n${skillIndex(skills)}\n\nLoaded skills:\n${skillText(skills, state.skillsLoaded) || "(none)"}`,

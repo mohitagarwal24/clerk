@@ -6,7 +6,7 @@ import { serve } from "@hono/node-server";
 import { z } from "zod";
 import { config } from "../src/config.js";
 import { decide, structured } from "../src/llm.js";
-import { openaiLLM, parseLooseJson } from "../src/providers/openai.js";
+import { callFromText, openaiLLM, parseLooseJson } from "../src/providers/openai.js";
 
 type Body = { model: string; tool_choice: unknown; tools: { function: { name: string; parameters: { properties: object } } }[]; messages: { content: string }[] };
 let handler: (b: Body, n: number) => Response | Promise<Response>;
@@ -104,6 +104,15 @@ describe("OpenAI-compatible provider", () => {
     await p.callTool({ system: "s", prompt: "p", tools, purpose: "t" });
     expect(seen.map((b) => b.model)).toEqual(["m-gone", "m-backup", "m-backup"]);
     config.llmFallbackModels.splice(0, Infinity);
+  });
+
+  it("accepts a tool call written as JSON text only when it is unambiguous", () => {
+    const finishTool = { name: "finish", description: "", schema: z.object({ outcome: z.string(), summary: z.string(), why: z.string() }) };
+    const all = [tools[0]!, finishTool];
+    expect(callFromText('{"outcome":"blocked","summary":"policy"}', all)).toEqual({ name: "finish", args: { why: "", outcome: "blocked", summary: "policy" } });
+    expect(callFromText('[{"name":"click","parameters":{"ref":"e2"}}]', all)).toEqual({ name: "click", args: { why: "", ref: "e2" } });
+    expect(callFromText('{"summary":"x"}', all)).toBeNull(); // fits no tool's required fields exactly
+    expect(callFromText("I will click the link", all)).toBeNull();
   });
 
   it("parses JSON wrapped in prose or fences", () => {

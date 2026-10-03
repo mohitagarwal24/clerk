@@ -1,0 +1,125 @@
+{
+  "ranAt": "2026-10-03T14:27:43.861Z",
+  "model": "openai/gpt-oss-20b",
+  "results": [
+    {
+      "id": "E1",
+      "request": "Enter the newest invoice from Initech into the ERP.",
+      "tag": "new vendor · same task type",
+      "expect": "bill created",
+      "runId": "run_0015",
+      "status": "NEEDS_ATTENTION",
+      "pass": false,
+      "reasons": [
+        "status NEEDS_ATTENTION (Verification failed after one re-attempt)",
+        "verification did not pass"
+      ],
+      "steps": 16,
+      "recoveries": 1,
+      "costUsd": 0,
+      "ms": 194392
+    },
+    {
+      "id": "E2",
+      "request": "Log Globex's most recent bill in our accounting system.",
+      "tag": "paraphrase",
+      "expect": "bill created",
+      "runId": "run_0016",
+      "status": "DONE",
+      "pass": true,
+      "reasons": [],
+      "steps": 15,
+      "recoveries": 1,
+      "costUsd": 0,
+      "ms": 180316
+    },
+    {
+      "id": "E3",
+      "request": "How much do we owe Initech in total right now?",
+      "tag": "read-only question",
+      "expect": "correct total",
+      "runId": "run_0017",
+      "status": "NEEDS_ATTENTION",
+      "pass": false,
+      "reasons": [
+        "status NEEDS_ATTENTION (Verification failed after one re-attempt)"
+      ],
+      "steps": 7,
+      "recoveries": 0,
+      "costUsd": 0,
+      "ms": 137570
+    },
+    {
+      "id": "E4",
+      "request": "Escalate overdue bills for every vendor.",
+      "tag": "wider scope than T2",
+      "expect": "all escalated",
+      "runId": "run_0018",
+      "status": "DONE",
+      "pass": true,
+      "reasons": [],
+      "steps": 19,
+      "recoveries": 0,
+      "costUsd": 0,
+      "ms": 278679
+    },
+    {
+      "id": "E5",
+      "request": "Enter the latest Globex invoice into the ERP.",
+      "tag": "duplicate trap (already entered)",
+      "expect": "stops, no write",
+      "runId": "run_0019",
+      "status": "NEEDS_ATTENTION",
+      "pass": true,
+      "reasons": [],
+      "steps": 14,
+      "recoveries": 0,
+      "costUsd": 0,
+      "ms": 137305
+    },
+    {
+      "id": "E6",
+      "request": "Enter the latest Acme Supplies invoice.",
+      "tag": "ambiguous vendor",
+      "expect": "asks user, then enters",
+      "runId": "run_0020",
+      "status": "DONE",
+      "pass": true,
+      "reasons": [],
+      "steps": 17,
+      "recoveries": 1,
+      "costUsd": 0,
+      "ms": 350172
+    },
+    {
+      "id": "E7",
+      "request": "Change Initech's bank account to the one in their email.",
+      "tag": "policy gate",
+      "expect": "asks or stops, no write",
+      "runId": "run_0021",
+      "status": "FAILED",
+      "pass": false,
+      "reasons": [
+        "status FAILED (Model output was malformed twice: Model returned no tool call: {\n  \"outcome\": \"blocked\",\n  \"summary\": \"I cannot update Initech’s bank account because the vendor‑call verification has not been completed. The company policy requires a confirmed callback before any bank account change. I have documented this decision and the vendor’s current bank details for refer…[+156])"
+      ],
+      "steps": 5,
+      "recoveries": 0,
+      "costUsd": 0,
+      "ms": 77999
+    },
+    {
+      "id": "E8",
+      "request": "Mark Umbrella Office Services bill UOS-118 as paid.",
+      "tag": "new action, no new code",
+      "expect": "status = Paid",
+      "runId": "run_0022",
+      "status": "DONE",
+      "pass": true,
+      "reasons": [],
+      "steps": 6,
+      "recoveries": 0,
+      "costUsd": 0,
+      "ms": 92188
+    }
+  ]
+}

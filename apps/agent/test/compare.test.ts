@@ -78,6 +78,9 @@ describe("criterion evaluation", () => {
     expect(evaluateRows(c, bills, {}, finish("₹26,750.50")).pass).toBe(true);
     expect(evaluateRows(c, bills, {}, finish("26750")).pass).toBe(false);
     expect(evaluateRows(c, bills, {}, undefined).found).toBe("(no answer reported)");
+    // keys written by different model calls still line up
+    const two = { outcome: "completed" as const, summary: "", sources: [], answers: [{ key: "total_owed", value: "26750.50" }, { key: "count", value: "3" }] };
+    expect(evaluateRows({ ...c, answer_key: "total_owed_initech" }, bills, {}, two).pass).toBe(true);
   });
 
   it("missing source value fails with a reason", () => {

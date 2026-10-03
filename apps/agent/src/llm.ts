@@ -52,7 +52,7 @@ export async function decide(llm: LLM, req: ToolRequest, meter: Meter): Promise<
       const tool = req.tools.find((t) => t.name === out.name);
       if (!tool) problem = `Unknown tool "${out.name}".`;
       else {
-        const parsed = tool.schema.safeParse(out.args);
+        const parsed = tool.schema.safeParse(dropNulls(out.args));
         if (parsed.success) return { name: out.name, args: parsed.data as Record<string, unknown> };
         problem = `Arguments for ${out.name} are invalid: ${z.prettifyError(parsed.error)}`;
       }
@@ -86,7 +86,7 @@ export async function structured<S extends z.ZodType>(llm: LLM, req: Omit<JsonRe
     let problem: string;
     if ("error" in out) problem = out.error;
     else {
-      const parsed = req.schema.safeParse(out.value);
+      const parsed = req.schema.safeParse(dropNulls(out.value));
       if (parsed.success) return parsed.data;
       problem = z.prettifyError(parsed.error);
     }
@@ -94,6 +94,13 @@ export async function structured<S extends z.ZodType>(llm: LLM, req: Omit<JsonRe
     prompt = `${req.prompt}\n\nYOUR PREVIOUS REPLY WAS REJECTED: ${problem}\nReturn JSON that matches the schema exactly.`;
   }
   throw new MalformedOutputError("unreachable");
+}
+
+/** Many models write null for an optional field they leave out; treat null as "not given". */
+export function dropNulls(v: unknown): unknown {
+  if (Array.isArray(v)) return v.map(dropNulls);
+  if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).filter(([, x]) => x !== null).map(([k, x]) => [k, dropNulls(x)]));
+  return v;
 }
 
 export function costUsd(u: { inputTokens: number; outputTokens: number }): number {

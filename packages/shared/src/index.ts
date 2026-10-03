@@ -45,7 +45,7 @@ export const GoalSpec = z.object({
     .array(z.object({ key: z.string(), description: z.string() }))
     .describe("Values the verifier must independently re-read from the source document (empty if no source document)"),
   success_criteria: z.array(Criterion),
-  open_questions: z.array(z.string()).describe("Ambiguities the playbook cannot resolve; the agent will ask the user"),
+  open_questions: z.array(z.string()).describe("Only real ambiguities visible in the request itself; usually empty. Never ask the user to confirm what they already said"),
   plan: z.array(z.string()).describe("3-8 short steps"),
 });
 export type GoalSpec = z.infer<typeof GoalSpec>;

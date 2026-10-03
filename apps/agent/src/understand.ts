@@ -26,7 +26,12 @@ Example, request "Record purchase order PO-77 from Foo Ltd":
   source_fields: [{key:"po_no",description:"PO number on the selected document"},{key:"amount",description:"PO total"}]
   criteria: C1 record bills where [{field:"vendor_name",op:"~",value:"Foo"},{field:"invoice_no",op:"=",value:"$source.po_no"}] expect_count "1";
             C2 same where, expect_fields [{field:"amount",value:"$source.amount"}].
-Keep criteria few (2-5) and each one checkable. Put genuine ambiguities in open_questions; do not invent answers.`;
+Example, request "Put every overdue Foo bill on hold":
+  criteria: C1 record bills where [{field:"vendor_name",op:"~",value:"Foo"},{field:"overdue",op:"=",value:"true"}] expect_fields [{field:"status",value:"On hold"}].
+A record check describes the state AFTER the work is done. Never filter on the field the work changes (e.g. do not filter on status=Open when the work changes status); filter on what stays the same and put the new value in expect_fields.
+Names the user gave (vendor_name, name) are loose: always match them with "~", never "=" (the record may say "Initech LLC" for "Initech").
+Keep criteria few (2-5) and each one checkable.
+open_questions are only for real ambiguity you can already see in the request (e.g. it omits something required). A vendor named in the request is not ambiguous by itself; if several records turn out to match, the agent will ask during the work. Do not ask the user to confirm what they already said.`;
 
 export async function pickSkills(llm: LLM, meter: Meter, request: string, skills: Skill[]): Promise<string[]> {
   const out = await structured(llm, {
@@ -39,14 +44,31 @@ export async function pickSkills(llm: LLM, meter: Meter, request: string, skills
   return [...new Set(out.skills.filter((n) => known.has(n)))];
 }
 
+/**
+ * Deterministic clean-up of model-written criteria, for mistakes that would fail a correct result:
+ * - a literal name compared with "=" can never match "Initech LLC" for "Initech": make it "~";
+ * - an "answer" check with no answer_key but record expectations is really a "record" check.
+ */
+export function lintGoal(goal: GoalSpec): GoalSpec {
+  const loose = new Set(["vendor_name", "name"]);
+  return {
+    ...goal,
+    success_criteria: goal.success_criteria.map((c) => ({
+      ...c,
+      kind: c.kind === "answer" && !c.answer_key && (c.expect_fields?.length || c.expect_count) ? "record" as const : c.kind,
+      where: c.where?.map((w) => (loose.has(w.field) && w.op === "=" && !w.value.startsWith("$source.") ? { ...w, op: "~" as const } : w)),
+    })),
+  };
+}
+
 export async function understand(llm: LLM, meter: Meter, request: string, skills: Skill[], chosen: string[]): Promise<GoalSpec> {
-  return structured(llm, {
+  return lintGoal(await structured(llm, {
     purpose: "understand",
     system: `${SYSTEM}\n\n${CRITERIA_GUIDE}`,
     prompt: `Request: ${request}\n\nPlaybook index:\n${skillIndex(skills)}\n\nLoaded skills:\n${skillText(skills, chosen)}\n\n` +
       `Produce the goal specification: intent, entities, source_fields, success_criteria, open_questions, plan (3-8 short steps).`,
     schema: GoalSpec,
-  }, meter);
+  }, meter));
 }
 
 export async function replan(llm: LLM, meter: Meter, state: RunState, skills: Skill[], reason: string): Promise<string[]> {
