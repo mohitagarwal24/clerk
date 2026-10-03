@@ -9,7 +9,9 @@ Spec: [PRD.md](PRD.md) · Rules for coding agents: [AGENTS.md](AGENTS.md) · Dec
 ```bash
 pnpm i
 pnpm exec playwright install chromium
-cp .env.example .env          # set GEMINI_API_KEY; pin GEMINI_MODEL (pnpm spike:gemini lists what your key can use)
+cp .env.example .env          # paste a free NVIDIA key (build.nvidia.com) into LLM_API_KEY
+pnpm spike:llm --list         # models your key can use; then grade a few:
+pnpm spike:llm openai/gpt-oss-120b <another-model>   # pin the best one as LLM_MODEL
 pnpm reset                    # seed the mock company database and invoice PDFs
 pnpm demo                     # mock apps :4000 · agent API :4100 · console http://localhost:5173
 ```
@@ -138,7 +140,10 @@ Tools: `run_task(request, chaos?)`, `get_run(run_id)`, `approve(run_id, approval
 
 ## Models, APIs and frameworks
 
-- **Gemini** via `@google/genai`: forced function calling (mode ANY) for steps, JSON-schema structured output for planning and verification. Model ID pinned in `.env` (`GEMINI_MODEL`, optional `GEMINI_VERIFIER_MODEL`). Swappable behind [llm.ts](apps/agent/src/llm.ts).
+- **Model, swappable behind [llm.ts](apps/agent/src/llm.ts)** and chosen in `.env`:
+  - Default: any **OpenAI-compatible API**, pointed at **NVIDIA build.nvidia.com** (free key, ~40 requests/min) ([providers/openai.ts](apps/agent/src/providers/openai.ts), plain `fetch`). Forced tool calls for steps; structured output as a forced call to a `submit` tool; falls back gracefully when a server rejects forced tool choice; paced to `LLM_RPM`. The same adapter runs Cerebras, Groq, OpenRouter or a local Ollama.
+  - **Gemini** via `@google/genai` with `LLM_PROVIDER=gemini` ([providers/gemini.ts](apps/agent/src/providers/gemini.ts)): function calling mode ANY, JSON-schema structured output.
+  - The exact model ID is pinned in `.env` (`LLM_MODEL`, optional `LLM_VERIFIER_MODEL`), picked with `pnpm spike:llm`.
 - **Playwright** ≥1.59: AI-mode aria snapshots with refs, `aria-ref=` locators, `context.route` for the gate, screenshots, downloads.
 - **Zod 4** for every schema (tool declarations, structured output, API, events). **Hono** for the mock apps and the agent API (SSE). **Vite + React** for the console. **better-sqlite3**, **pdf-lib** (generate), **unpdf** (read), **p-retry**.
 - **OpenTelemetry + Arize Phoenix** (`@arizeai/phoenix-otel`), **MCP SDK** v1, **Vitest**, **concurrently**.

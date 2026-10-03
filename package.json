@@ -20,7 +20,8 @@
     "typecheck": "pnpm -r --if-present typecheck",
     "spike:aria": "tsx spikes/aria.ts",
     "spike:gemini": "tsx --env-file=.env spikes/gemini.ts",
-    "offline": "concurrently -k -n agent,console -c blue,green \"tsx apps/agent/test/offline-console.ts\" \"AGENT_PORT=4610 pnpm --filter @clerk/console exec vite --port 5174\""
+    "offline": "concurrently -k -n agent,console -c blue,green \"tsx apps/agent/test/offline-console.ts\" \"AGENT_PORT=4610 pnpm --filter @clerk/console exec vite --port 5174\"",
+    "spike:llm": "tsx --env-file-if-exists=.env spikes/llm.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

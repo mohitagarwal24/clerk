@@ -7,7 +7,7 @@ import { BrowserSession, launchBrowser, runHeaders } from "./browser.js";
 import { EventBus } from "./events.js";
 import { ApprovalGate, type Approver } from "./gate.js";
 import { findInjections } from "./injection.js";
-import { costUsd, geminiLLM, type LLM, type Meter } from "./llm.js";
+import { costUsd, createLLM, type LLM, type Meter } from "./llm.js";
 import { runLoop } from "./loop.js";
 import { newRunId, newState, runDir, saveState } from "./memory.js";
 import { writeReport } from "./reporter.js";
@@ -111,7 +111,7 @@ async function execute(opts: RunOptions, state: RunState, bus: EventBus, dir: st
     state.traceId = currentTraceId();
     let llm: LLM;
     try {
-      llm = opts.llm ?? geminiLLM();
+      llm = opts.llm ?? createLLM();
     } catch (e) {
       emit({ type: "error", message: (e as Error).message });
       return finishRun("FAILED", (e as Error).message, (e as Error).message);

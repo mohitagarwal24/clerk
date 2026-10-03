@@ -29,6 +29,7 @@ runs/<id>/          evidence (gitignored)
 - `pnpm i` · `pnpm reset` (reseed DB, clear chaos state) · `pnpm demo` (mock apps + agent API + console)
 - `pnpm cli "<request>" [--chaos <preset>] [--yes] [--answer "<text>"]` · `pnpm evals [E1 E3]` · `pnpm mcp` · `pnpm test` · `pnpm typecheck`
 - `pnpm offline`: console against a scripted model (T1 only), no API key needed
+- `pnpm spike:llm --list [filter]` lists models; `pnpm spike:llm <model> ...` grades them on a planning call and a real step
 - Phoenix: `pnpm phoenix` (runs `uvx arize-phoenix serve`), then `CLERK_TRACING=1`
 
 ## Conventions
@@ -37,7 +38,7 @@ runs/<id>/          evidence (gitignored)
 - Every LLM and tool call is wrapped in a telemetry span (`telemetry.ts`).
 - Emit run events through one `emit(event)` function; console, CLI and MCP all consume the same events.
 - Chaos is keyed by run ID (header `x-clerk-run`), with a fixed schedule per preset. Never use global counters.
-- Gemini model ID comes from `GEMINI_MODEL` in `.env`. Never hard-code it.
+- The model provider and ID come from `.env` (`LLM_PROVIDER`/`LLM_MODEL`, or `GEMINI_MODEL`). Never hard-code them. Provider code lives only in `apps/agent/src/providers/`; everything else uses the `LLM` interface from `llm.ts`.
 - Small files, no clever abstractions. The author must be able to explain and modify any file live in an interview.
 
 ## Design tokens (from docs/design)

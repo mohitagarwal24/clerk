@@ -16,7 +16,7 @@ import { join, normalize, resolve } from "node:path";
 import { z } from "zod";
 import { ApprovalDecision, ChaosPreset, RunState, summarize, TERMINAL, type ApprovalRequest, type Question, type RunEvent } from "@clerk/shared";
 import { config, REPO_ROOT, RUNS_DIR } from "./config.js";
-import type { LLM } from "./llm.js";
+import { llmConfigured, type LLM } from "./llm.js";
 import { startRun, type Run } from "./run.js";
 import { loadPlaybook } from "./skills.js";
 import { traceUrl } from "./telemetry.js";
@@ -43,7 +43,7 @@ export function createServer(opts: { llm?: LLM } = {}) {
     const ping = async (path: string) => {
       try { return (await fetch(`${config.baseUrl}${path}`, { redirect: "manual", signal: AbortSignal.timeout(1500) })).status < 500; } catch { return false; }
     };
-    return c.json({ portal: await ping("/portal/login"), erp: await ping("/erp/login"), model: config.model || null, modelReady: !!opts.llm || !!(process.env.GEMINI_API_KEY && config.model), tracing: config.tracing, phoenixUrl: config.tracing ? config.phoenixUrl : null });
+    return c.json({ portal: await ping("/portal/login"), erp: await ping("/erp/login"), model: config.model || null, modelReady: !!opts.llm || llmConfigured(), tracing: config.tracing, phoenixUrl: config.tracing ? config.phoenixUrl : null });
   });
 
   app.get("/playbook", (c) => c.json(loadPlaybook().map((s) => ({ name: s.name, description: s.description, appliesTo: s.appliesTo }))));
@@ -161,6 +161,6 @@ export function createServer(opts: { llm?: LLM } = {}) {
 if (import.meta.url === `file://${process.argv[1]}`) {
   const app = createServer();
   serve({ fetch: app.fetch, port: config.apiPort }, () => {
-    console.log(`Clerk agent API on http://localhost:${config.apiPort}/api  (model: ${config.model || "not set"})`);
+    console.log(`Clerk agent API on http://localhost:${config.apiPort}/api  (${config.provider}: ${config.model || "model not set"})`);
   });
 }

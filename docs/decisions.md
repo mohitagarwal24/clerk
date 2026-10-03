@@ -35,3 +35,10 @@ Deviations from PRD.md and findings that changed the plan. Newest last.
 - **"Outstanding" = all unpaid bills (Open + Escalated)** in `playbook/bill-status.md`: ₹57,750.50 for Initech at seed.
 - **Testing without a model key**: `test/scripted-llm.ts` is a test double behind the same `LLM` interface. The e2e test runs real Chromium, the real mock apps with chaos, the gate and the verifier; only the model's choices are scripted. `pnpm offline` reuses it to click through the console.
 - **Not built**: Gemini computer-use vision fallback (stretch).
+
+## 2026-10-03 — Free model provider: NVIDIA build.nvidia.com
+- **Default provider is now any OpenAI-compatible API, pointed at NVIDIA's free endpoint** (`integrate.api.nvidia.com/v1`, ~40 requests/min, no card). Gemini's free tier gives the newest Flash models only ~20 requests/day, and a run needs 25–30 calls. Gemini stays available with `LLM_PROVIDER=gemini`.
+- `llm.ts` keeps the interface, validation and metering; providers live in `providers/gemini.ts` and `providers/openai.ts`. The OpenAI adapter uses plain `fetch` (no new dependency), so Cerebras, Groq, OpenRouter and Ollama work by changing `.env`.
+- **Structured output is a forced call to a single `submit` tool** rather than a JSON mode, because tool calling is the most widely supported feature across hosted open models. If a server rejects forced `tool_choice`, the adapter falls back to `auto` for that model and parses JSON from the text; `decide`/`structured` still re-prompt once on malformed output.
+- **Client-side pacing** (`LLM_RPM`, default 35) and 429/5xx retries honouring `Retry-After`, because free tiers rate-limit per account.
+- `pnpm spike:llm` grades candidate models on a real planning call and a real step (the Globex list: must open INV-1042, not superseded INV-1041) before one is pinned.

@@ -2,7 +2,7 @@
 // A simulated human approves every held write and answers questions from the case, so a policy
 // violation by the agent shows up as a failed case rather than being caught by a person.
 //   pnpm evals            all cases          pnpm evals E3 E5    some cases
-// Needs the mock apps running (pnpm dev:mock) and GEMINI_API_KEY / GEMINI_MODEL in .env.
+// Needs the mock apps running (pnpm dev:mock) and a model configured in .env (LLM_* or GEMINI_*).
 import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { EvalCase, type EvalResult } from "../packages/shared/src/index.js";

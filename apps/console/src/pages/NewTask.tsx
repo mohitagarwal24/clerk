@@ -57,11 +57,11 @@ export function NewTask() {
               </select>
             </label>
             <span className="toggle" title="Enforced in the browser's network layer; it cannot be turned off">{Icon.lock} Every ERP write needs approval</span>
-            <span className="toggle" title="GEMINI_MODEL in .env">Model <b className="mono">{health?.model ?? "…"}</b></span>
+            <span className="toggle" title="LLM_MODEL / GEMINI_MODEL in .env">Model <b className="mono">{health?.model ?? "…"}</b></span>
           </div>
           <button className="btn primary" disabled={busy || request.trim().length < 3} onClick={submit}>Run task {Icon.arrow}</button>
         </div>
-        {health && !health.modelReady && <div className="note" style={{ padding: "0 22px 14px", color: "#8A1C12" }}>Set GEMINI_API_KEY and GEMINI_MODEL in .env, then restart the agent API.</div>}
+        {health && !health.modelReady && <div className="note" style={{ padding: "0 22px 14px", color: "#8A1C12" }}>No model configured: set LLM_API_KEY and LLM_MODEL (or GEMINI_*) in .env, then restart the agent API.</div>}
         {err && <div className="note" style={{ padding: "0 22px 14px", color: "#8A1C12" }}>{err}</div>}
       </section>
 

@@ -1,87 +1,26 @@
-// The only file that knows which model provider we use. Everything else talks to the `LLM`
-// interface: "call exactly one of these tools" and "return JSON matching this schema".
+// The only place that chooses a model provider. Everything else talks to the `LLM` interface:
+// "call exactly one of these tools" and "return JSON matching this schema".
 // Validation (Zod, one re-prompt on malformed output) and usage metering wrap any provider.
-import { GoogleGenAI, FunctionCallingConfigMode } from "@google/genai";
-import pRetry, { AbortError } from "p-retry";
+//   providers/gemini.ts  Gemini via @google/genai
+//   providers/openai.ts  any OpenAI-compatible API (NVIDIA build.nvidia.com, Cerebras, Groq, Ollama...)
 import { z } from "zod";
 import { config } from "./config.js";
 import { clip, span } from "./telemetry.js";
+import { MalformedOutputError, type JsonRequest, type LLM, type LLMUsage, type ToolRequest } from "./providers/common.js";
+import { geminiLLM } from "./providers/gemini.js";
+import { openaiLLM } from "./providers/openai.js";
 
-export type ToolDecl = { name: string; description: string; schema: z.ZodObject };
-export type LLMUsage = { model: string; inputTokens: number; outputTokens: number };
+export { MalformedOutputError, toJsonSchema } from "./providers/common.js";
+export type { JsonRequest, LLM, LLMUsage, ToolDecl, ToolRequest } from "./providers/common.js";
 
-export type ToolRequest = { system: string; prompt: string; tools: ToolDecl[]; purpose: string };
-export type JsonRequest = { system: string; prompt: string; schema: z.ZodType; purpose: string; model?: string };
-
-/** A provider: raw calls, no validation. */
-export interface LLM {
-  callTool(req: ToolRequest): Promise<{ name: string; args: unknown; usage: LLMUsage }>;
-  json(req: JsonRequest): Promise<{ value: unknown; usage: LLMUsage }>;
+/** The provider configured in .env. Throws a readable error if its key or model is missing. */
+export function createLLM(model?: string): LLM {
+  return config.provider === "openai" ? openaiLLM({ model }) : geminiLLM(model);
 }
 
-export class MalformedOutputError extends Error {}
-
-/** Zod -> plain JSON Schema that Gemini accepts. */
-export function toJsonSchema(schema: z.ZodType): Record<string, unknown> {
-  const strip = (v: unknown): unknown => {
-    if (Array.isArray(v)) return v.map(strip);
-    if (v && typeof v === "object") {
-      const out: Record<string, unknown> = {};
-      for (const [k, val] of Object.entries(v)) if (k !== "$schema" && k !== "additionalProperties") out[k] = strip(val);
-      return out;
-    }
-    return v;
-  };
-  return strip(z.toJSONSchema(schema, { io: "input" })) as Record<string, unknown>;
-}
-
-// ---- Gemini ---------------------------------------------------------------
-
-export function geminiLLM(): LLM {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey || !config.model) throw new Error("Set GEMINI_API_KEY and GEMINI_MODEL in .env (see .env.example)");
-  const ai = new GoogleGenAI({ apiKey, httpOptions: { timeout: 120_000 } });
-
-  // Transient provider errors (429, 5xx, network) are retried with backoff; anything else is not.
-  const call = <T>(fn: () => Promise<T>) => pRetry(async () => {
-    try { return await fn(); } catch (e) {
-      const status = (e as { status?: number }).status;
-      if (status && status < 500 && status !== 429) throw new AbortError(e as Error);
-      throw e;
-    }
-  }, { retries: 3, minTimeout: 1000, factor: 2 });
-
-  const usageOf = (model: string, u: { promptTokenCount?: number; candidatesTokenCount?: number; thoughtsTokenCount?: number } | undefined): LLMUsage => ({
-    model, inputTokens: u?.promptTokenCount ?? 0, outputTokens: (u?.candidatesTokenCount ?? 0) + (u?.thoughtsTokenCount ?? 0),
-  });
-
-  return {
-    async callTool(req) {
-      const res = await call(() => ai.models.generateContent({
-        model: config.model,
-        contents: req.prompt,
-        config: {
-          systemInstruction: req.system,
-          toolConfig: { functionCallingConfig: { mode: FunctionCallingConfigMode.ANY } },
-          tools: [{ functionDeclarations: req.tools.map((t) => ({ name: t.name, description: t.description, parametersJsonSchema: toJsonSchema(t.schema) })) }],
-        },
-      }));
-      const fc = res.functionCalls?.[0];
-      if (!fc?.name) throw new MalformedOutputError(`Model returned no function call: ${clip(res.text ?? "", 300)}`);
-      return { name: fc.name, args: fc.args ?? {}, usage: usageOf(config.model, res.usageMetadata) };
-    },
-    async json(req) {
-      const model = req.model ?? config.model;
-      const res = await call(() => ai.models.generateContent({
-        model,
-        contents: req.prompt,
-        config: { systemInstruction: req.system, responseMimeType: "application/json", responseJsonSchema: toJsonSchema(req.schema) },
-      }));
-      let value: unknown;
-      try { value = JSON.parse(res.text ?? ""); } catch { throw new MalformedOutputError(`Not JSON: ${clip(res.text ?? "", 300)}`); }
-      return { value, usage: usageOf(model, res.usageMetadata) };
-    },
-  };
+export function llmConfigured(): boolean {
+  if (!config.model) return false;
+  return config.provider === "openai" ? !!process.env.LLM_API_KEY || /localhost|127\.0\.0\.1/.test(config.llmBaseUrl) : !!process.env.GEMINI_API_KEY;
 }
 
 // ---- Validation + metering (provider-independent) ------------------------
@@ -92,7 +31,7 @@ export type Meter = (u: LLMUsage) => void;
 export async function decide(llm: LLM, req: ToolRequest, meter: Meter): Promise<{ name: string; args: Record<string, unknown> }> {
   let prompt = req.prompt;
   for (let attempt = 1; attempt <= 2; attempt++) {
-    const out = await span(`llm.${req.purpose}`, "LLM", { "gen_ai.operation.name": "chat", "gen_ai.request.model": config.model, "input.value": clip(prompt), attempt }, async (s) => {
+    const out = await span(`llm.${req.purpose}`, "LLM", { "gen_ai.operation.name": "chat", "gen_ai.system": config.provider, "gen_ai.request.model": config.model, "input.value": clip(prompt), attempt }, async (s) => {
       try {
         const r = await llm.callTool({ ...req, prompt });
         meter(r.usage);
@@ -129,7 +68,7 @@ export async function structured<S extends z.ZodType>(llm: LLM, req: Omit<JsonRe
   let prompt = req.prompt;
   for (let attempt = 1; attempt <= 2; attempt++) {
     const model = req.model ?? config.model;
-    const out = await span(`llm.${req.purpose}`, "LLM", { "gen_ai.operation.name": "chat", "gen_ai.request.model": model, "input.value": clip(prompt), attempt }, async (s) => {
+    const out = await span(`llm.${req.purpose}`, "LLM", { "gen_ai.operation.name": "chat", "gen_ai.system": config.provider, "gen_ai.request.model": model, "input.value": clip(prompt), attempt }, async (s) => {
       try {
         const r = await llm.json({ ...req, prompt });
         meter(r.usage);
