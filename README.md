@@ -2,7 +2,7 @@
 
 [![ci](https://github.com/mohitagarwal24/clerk/actions/workflows/ci.yml/badge.svg)](https://github.com/mohitagarwal24/clerk/actions/workflows/ci.yml)
 
-**Demo video:** [watch the 3-minute demo](VIDEO_LINK_HERE) · **Built for:** CentrAlign AI, AI Engineering Intern take-home
+**Demo video:** [watch the demo](https://youtu.be/0zjp6jiJ6Lc) · **Built for:** CentrAlign AI, AI Engineering Intern take-home
 
 Give Clerk a short back-office request, such as *"Find the latest invoice from Globex, extract the amount and due date, enter it into the ERP, and tell me when it's done."* It:
 
